@@ -2,11 +2,11 @@ import { CorporateAccount, CorporatePatient } from "../types/corporate";
 
 export const corporateAccountMock: CorporateAccount = {
   id: 1,
-  company_name: "Northstar Foods",
-  invite_code: "NORTHSTAR-2026",
+  company_name: "Commonwealth Bank",
+  invite_code: "COMBANK-2026",
   plan_price_cents: 7900,
-  admin_name: "Mia Chen",
-  admin_email: "mia.chen@northstar.example",
+  admin_name: "Ruitao Yuan",
+  admin_email: "ryua7873@uni.sydney.edu.au",
 };
 
 export const employeesMock: CorporatePatient[] = [

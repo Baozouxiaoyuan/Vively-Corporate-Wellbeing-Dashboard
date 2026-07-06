@@ -17,7 +17,7 @@ export function LoginPage() {
         <label className="block text-sm font-medium text-ink/70" htmlFor="email">
           Email
         </label>
-        <input id="email" className="mt-2 w-full rounded-md border border-ink/10 px-3 py-2 outline-none focus:border-teal" defaultValue="mia.chen@northstar.example" />
+        <input id="email" className="mt-2 w-full rounded-md border border-ink/10 px-3 py-2 outline-none focus:border-teal" defaultValue="ryua7873@uni.sydney.edu.au" />
         <label className="mt-4 block text-sm font-medium text-ink/70" htmlFor="password">
           Password
         </label>

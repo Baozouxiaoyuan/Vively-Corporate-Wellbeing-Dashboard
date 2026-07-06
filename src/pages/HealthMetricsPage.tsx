@@ -1,11 +1,12 @@
 import { ShieldCheck, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { getHealthMetrics } from "../api/mockApi";
-import { healthMetricsMock } from "../data/healthMetrics.mock";
+import { HealthCategoryMatrix } from "../components/health/HealthCategoryMatrix";
 import { MetricCard } from "../components/ui/MetricCard";
 import { PageHeader } from "../components/ui/PageHeader";
 import { InsufficientData, PrivacyNotice } from "../components/ui/PrivacyNotice";
+import { healthMetricsMock } from "../data/healthMetrics.mock";
 import { HealthMetricCohort } from "../types/corporate";
 
 const PRIVACY_THRESHOLD = 10;
@@ -47,24 +48,8 @@ export function HealthMetricsPage() {
             <MetricCard label="In range" value={`${metrics.in_range_biomarker_percentage}%`} helper="Biomarker share" />
             <MetricCard label="Needs attention" value={`${metrics.needs_attention_percentage}%`} helper="Biomarker share" />
           </div>
+          <HealthCategoryMatrix categories={metrics.category_distribution} />
           <div className="grid gap-6 lg:grid-cols-2">
-            <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft">
-              <h2 className="mb-4 text-base font-semibold">Category distribution</h2>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={metrics.category_distribution}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="category" tickLine={false} axisLine={false} />
-                    <YAxis tickLine={false} axisLine={false} />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="optimal" stackId="a" fill="#237a73" />
-                    <Bar dataKey="in_range" stackId="a" fill="#86a789" />
-                    <Bar dataKey="needs_attention" stackId="a" fill="#d96858" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </section>
             <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft">
               <h2 className="mb-4 text-base font-semibold">Vively score trend</h2>
               <div className="h-80">
