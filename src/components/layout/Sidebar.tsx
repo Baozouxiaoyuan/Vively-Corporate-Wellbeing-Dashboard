@@ -1,5 +1,6 @@
 import { Activity, BarChart3, CreditCard, LayoutDashboard, Users } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { VivelyLogo } from "../vively-ui/Logo";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -13,9 +14,12 @@ export function Sidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 border-r border-ink/10 bg-white lg:block">
       <div className="flex h-16 items-center border-b border-ink/10 px-6">
-        <div>
-          <div className="text-lg font-semibold tracking-normal">Vively</div>
-          <div className="text-xs text-ink/55">Corporate wellbeing</div>
+        <div className="flex items-center gap-3">
+          <VivelyLogo className="h-8 w-9 text-neutral-900" />
+          <div>
+            <div className="text-lg font-semibold tracking-normal">Vively</div>
+            <div className="text-xs text-ink/55">Corporate wellbeing</div>
+          </div>
         </div>
       </div>
       <nav className="space-y-1 px-3 py-4">

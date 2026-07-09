@@ -1,13 +1,17 @@
-import { Activity } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Button } from "../components/vively-ui/Button";
+import { Card, CardContent } from "../components/vively-ui/Card";
+import { Input } from "../components/vively-ui/Input";
+import { VivelyLogo } from "../components/vively-ui/Logo";
 
 export function LoginPage() {
   return (
     <main className="grid min-h-screen place-items-center bg-mist px-4">
-      <section className="w-full max-w-md rounded-lg border border-ink/10 bg-white p-8 shadow-soft">
+      <Card className="w-full max-w-md rounded-3xl py-8 shadow-soft">
+        <CardContent>
         <div className="mb-8 flex items-center gap-3">
-          <div className="grid h-11 w-11 place-items-center rounded-md bg-teal text-white">
-            <Activity className="h-5 w-5" />
+          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-neutral-900 text-white">
+            <VivelyLogo className="h-7 w-8" />
           </div>
           <div>
             <h1 className="text-xl font-semibold">Vively Corporate</h1>
@@ -17,15 +21,16 @@ export function LoginPage() {
         <label className="block text-sm font-medium text-ink/70" htmlFor="email">
           Email
         </label>
-        <input id="email" className="mt-2 w-full rounded-md border border-ink/10 px-3 py-2 outline-none focus:border-teal" defaultValue="ryua7873@uni.sydney.edu.au" />
+        <Input id="email" className="mt-2" defaultValue="ryua7873@uni.sydney.edu.au" />
         <label className="mt-4 block text-sm font-medium text-ink/70" htmlFor="password">
           Password
         </label>
-        <input id="password" type="password" className="mt-2 w-full rounded-md border border-ink/10 px-3 py-2 outline-none focus:border-teal" defaultValue="prototype" />
-        <Link to="/dashboard" className="mt-6 flex w-full items-center justify-center rounded-md bg-teal px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal/90">
-          Sign in
-        </Link>
-      </section>
+        <Input id="password" type="password" className="mt-2" defaultValue="prototype" />
+        <Button asChild className="mt-6 w-full">
+          <Link to="/dashboard">Sign in</Link>
+        </Button>
+        </CardContent>
+      </Card>
     </main>
   );
 }
