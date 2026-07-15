@@ -64,11 +64,33 @@ export async function createEmployeeInvite(input: CreateEmployeeInviteInput): Pr
     membership_status: "inactive",
     baseline_status: "not_started",
     invited_at: new Date().toISOString(),
+    email_sent_at: null,
     opened_at: null,
     signedup_at: null,
   };
   employees = [newEmployee, ...employees];
   return newEmployee;
+}
+
+export async function sendEmployeeInviteEmail(employeeId: number): Promise<CorporatePatient> {
+  await wait(450);
+  const employee = employees.find((item) => item.id === employeeId);
+  if (!employee) {
+    throw new Error("Employee invite not found");
+  }
+
+  const updatedEmployee = {
+    ...employee,
+    email_sent_at: new Date().toISOString(),
+  };
+
+  employees = employees.map((item) => (item.id === employeeId ? updatedEmployee : item));
+  return updatedEmployee;
+}
+
+export async function removeEmployee(employeeId: number): Promise<void> {
+  await wait();
+  employees = employees.filter((employee) => employee.id !== employeeId);
 }
 
 export async function getActivationSummary(): Promise<ActivationSummary> {

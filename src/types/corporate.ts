@@ -29,6 +29,7 @@ export interface CorporatePatient {
   membership_status: MembershipStatus;
   baseline_status: BaselineStatus;
   invited_at: string;
+  email_sent_at?: string | null;
   opened_at: string | null;
   signedup_at: string | null;
 }

@@ -2,7 +2,6 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { Navigate, RouterProvider, createBrowserRouter } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
-import { ActivationPage } from "./pages/ActivationPage";
 import { BillingPage } from "./pages/BillingPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { EmployeesPage } from "./pages/EmployeesPage";
@@ -18,7 +17,7 @@ const router = createBrowserRouter([
     children: [
       { path: "/dashboard", element: <DashboardPage /> },
       { path: "/employees", element: <EmployeesPage /> },
-      { path: "/activation", element: <ActivationPage /> },
+      { path: "/activation", element: <Navigate to="/employees" replace /> },
       { path: "/health-metrics", element: <HealthMetricsPage /> },
       { path: "/billing", element: <BillingPage /> },
     ],
