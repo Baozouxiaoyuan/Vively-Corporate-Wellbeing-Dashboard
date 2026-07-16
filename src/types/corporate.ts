@@ -76,13 +76,10 @@ export interface ActivationSummary {
 export interface HealthMetricCohort {
   team: string;
   cohort_size: number;
-  average_vively_score: number;
-  score_change: number;
   optimal_biomarker_percentage: number;
   in_range_biomarker_percentage: number;
   needs_attention_percentage: number;
   category_distribution: Array<{ category: string; optimal: number; in_range: number; needs_attention: number }>;
-  trend: Array<{ month: string; score: number }>;
 }
 
 export interface BillingSummary {

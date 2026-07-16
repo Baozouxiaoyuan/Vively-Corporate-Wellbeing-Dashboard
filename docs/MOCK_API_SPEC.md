@@ -73,6 +73,22 @@ Input:
 
 Returns the created employee record.
 
+### `resolveVivelyUserByEmail(email)`
+
+Internal mock helper used by `createEmployeeInvite`.
+
+Returns whether the email maps to an existing Vively user/patient reference:
+
+```ts
+{
+  exists: boolean;
+  vively_user_id: number | null;
+  vively_patient_id: number | null;
+  userable_type: "Patient" | null;
+  link_status: "patient_linked" | "not_found";
+}
+```
+
 ### `sendEmployeeInviteEmail(employeeId)`
 
 Prototype-only mock for the email invite action.
@@ -108,7 +124,7 @@ Returns:
 
 ### `getHealthMetrics(team)`
 
-Used by Health Metrics.
+Used by Dashboard and Health Metrics.
 
 Returns aggregate-only team health data:
 
@@ -116,8 +132,6 @@ Returns aggregate-only team health data:
 {
   team: string;
   cohort_size: number;
-  average_vively_score: number;
-  score_change: number;
   optimal_biomarker_percentage: number;
   in_range_biomarker_percentage: number;
   needs_attention_percentage: number;
@@ -145,4 +159,3 @@ For real integration, the main missing pieces are:
 - Backend aggregate health metrics with the privacy threshold enforced server-side.
 - Real invitation email sending.
 - Real corporate billing rules, if billing becomes functional.
-
