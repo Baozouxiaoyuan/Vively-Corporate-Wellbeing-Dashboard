@@ -1,27 +1,34 @@
-import { Activity, CheckCircle2, CreditCard, TrendingUp, Users } from "lucide-react";
+import { Activity, CheckCircle2, CreditCard, ShieldCheck, TrendingUp, Users } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getActivationSummary, getBillingSummary, getCorporateAccount } from "../api/mockApi";
+import { getActivationSummary, getBillingSummary, getCorporateAccount, getHealthMetrics } from "../api/mockApi";
 import { MetricCard } from "../components/ui/MetricCard";
 import { PageHeader } from "../components/ui/PageHeader";
 import { PrivacyNotice } from "../components/ui/PrivacyNotice";
 import { StatusBadge } from "../components/ui/StatusBadge";
-import { ActivationSummary, BillingSummary, CorporateAccount } from "../types/corporate";
+import { ActivationSummary, BillingSummary, CorporateAccount, HealthMetricCohort } from "../types/corporate";
 import { formatCurrency } from "../utils/format";
 
 export function DashboardPage() {
   const [account, setAccount] = useState<CorporateAccount | null>(null);
   const [activation, setActivation] = useState<ActivationSummary | null>(null);
   const [billing, setBilling] = useState<BillingSummary | null>(null);
+  const [health, setHealth] = useState<HealthMetricCohort | null>(null);
 
   useEffect(() => {
-    void Promise.all([getCorporateAccount(), getActivationSummary(), getBillingSummary()]).then(([accountData, activationData, billingData]) => {
+    void Promise.all([getCorporateAccount(), getActivationSummary(), getBillingSummary(), getHealthMetrics("All Teams")]).then(([accountData, activationData, billingData, healthData]) => {
       setAccount(accountData);
       setActivation(activationData);
       setBilling(billingData);
+      setHealth(healthData);
     });
   }, []);
 
-  if (!account || !activation || !billing) return null;
+  if (!account || !activation || !billing || !health) return null;
+
+  const focusCategory = health.category_distribution.reduce(
+    (highest, category) => (category.needs_attention > highest.needs_attention ? category : highest),
+    health.category_distribution[0],
+  );
 
   return (
     <>
@@ -32,6 +39,20 @@ export function DashboardPage() {
         <MetricCard label="Activation rate" value={`${activation.activation_rate}%`} helper="Continued from invite into Vively" icon={TrendingUp} />
         <MetricCard label="Current billing" value={formatCurrency(billing.current_amount_cents)} helper={billing.current_period} icon={CreditCard} />
       </div>
+      <section className="mt-6 rounded-lg border border-ink/10 bg-white p-5 shadow-soft">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="text-base font-semibold">health snapshot</h2>
+            <p className="mt-1 text-sm text-ink/55">All Teams cohort</p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3 lg:min-w-[520px]">
+            <Info label="Cohort size" value={`${health.cohort_size} employees`} />
+            <Info label="Optimal markers" value={`${health.optimal_biomarker_percentage}%`} />
+            <Info label="Focus area" value={`${focusCategory.category} (${focusCategory.needs_attention}%)`} />
+          </div>
+          <ShieldCheck className="hidden h-6 w-6 text-teal lg:block" />
+        </div>
+      </section>
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft lg:col-span-2">
           <h2 className="text-base font-semibold">Corporate account</h2>
