@@ -5,7 +5,7 @@ export default {
     extend: {
       colors: {
         ink: "#17231f",
-        mist: "#f5f8f7",
+        mist: "#fffbf9",
         sage: "#4f7f6a",
         teal: "#237a73",
         coral: "#d96858",
@@ -14,7 +14,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["Fellix", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["Basis Grotesque", "Fellix", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
         serif: ["Quincy", "Georgia", "serif"],
       },
       boxShadow: {

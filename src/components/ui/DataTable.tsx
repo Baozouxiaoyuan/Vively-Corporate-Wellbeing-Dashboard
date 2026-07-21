@@ -8,7 +8,7 @@ interface DataTableProps<T> {
 
 export function DataTable<T>({ columns, data, getKey }: DataTableProps<T>) {
   return (
-    <div className="overflow-hidden rounded-lg border border-ink/10 bg-white shadow-soft">
+    <div className="overflow-hidden rounded-2xl border border-ink/10 bg-white shadow-soft">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-ink/10 text-sm">
           <thead className="bg-mist">

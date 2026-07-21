@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:backend": "VITE_API_MODE=backend VITE_API_BASE_URL=http://127.0.0.1:4000/api vite",
+    "server": "python3 -m uvicorn backend.main:app --host 127.0.0.1 --port 4000",
+    "setup:backend": "python3 -m pip install -r backend/requirements.txt",
     "build": "tsc -b && vite build",
     "preview": "vite preview"
   },

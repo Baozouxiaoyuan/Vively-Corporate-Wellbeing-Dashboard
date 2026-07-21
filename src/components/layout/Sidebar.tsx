@@ -1,12 +1,12 @@
-import { BarChart3, CreditCard, LayoutDashboard, Users } from "lucide-react";
+import { Activity, CreditCard, Plus, Settings, Users } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { VivelyLogo } from "../vively-ui/Logo";
 
 const navItems = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Employees", href: "/employees", icon: Users },
-  { label: "Health Metrics", href: "/health-metrics", icon: BarChart3 },
+  { label: "Team health", href: "/health-metrics", icon: Activity },
+  { label: "People", href: "/employees", icon: Users },
   { label: "Billing", href: "/billing", icon: CreditCard },
+  { label: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function Sidebar() {
@@ -18,11 +18,18 @@ export function Sidebar() {
             <VivelyLogo className="h-8 w-9 text-neutral-900" />
             <div>
               <div className="text-lg font-semibold tracking-normal">Vively</div>
-              <div className="text-xs text-ink/55">Corporate wellbeing</div>
+              <div className="text-xs uppercase tracking-[0.18em] text-sage">For teams</div>
             </div>
           </div>
         </div>
         <nav className="space-y-1 px-3 py-4">
+          <NavLink
+            to="/employees?invite=1"
+            className="mb-4 flex items-center gap-3 rounded-md border border-ink/10 bg-mist px-3 py-2.5 text-sm font-semibold text-ink/75 transition hover:border-ink/15 hover:text-ink"
+          >
+            <Plus className="h-4 w-4" />
+            Invite employees
+          </NavLink>
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -32,7 +39,7 @@ export function Sidebar() {
                 className={({ isActive }) =>
                   [
                     "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition",
-                    isActive ? "bg-teal text-white" : "text-ink/70 hover:bg-sage/10 hover:text-ink",
+                    isActive ? "bg-mist text-ink" : "text-ink/60 hover:bg-mist/70 hover:text-ink",
                   ].join(" ")
                 }
               >
@@ -53,7 +60,7 @@ export function Sidebar() {
               className={({ isActive }) =>
                 [
                   "flex min-w-0 flex-col items-center gap-1 rounded-md px-1 py-1.5 text-[11px] font-medium transition",
-                  isActive ? "bg-teal text-white" : "text-ink/65 hover:bg-sage/10 hover:text-ink",
+                  isActive ? "bg-mist text-ink" : "text-ink/65 hover:bg-mist/70 hover:text-ink",
                 ].join(" ")
               }
             >

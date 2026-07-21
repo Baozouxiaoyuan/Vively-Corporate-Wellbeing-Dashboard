@@ -14,7 +14,7 @@ Health data shown to corporate admins must stay aggregate-only.
 
 ### `getCorporateAccount()`
 
-Used by Dashboard and Billing.
+Used by Settings and Billing.
 
 Returns:
 
@@ -31,7 +31,7 @@ Returns:
 
 ### `getEmployees()`
 
-Used by Employees & Activation.
+Used by People.
 
 Returns an array of corporate employee records:
 
@@ -54,6 +54,16 @@ Returns an array of corporate employee records:
   opened_at: string | null;
   signedup_at: string | null;
 }
+```
+
+### `getTeams()`
+
+Used by People invite and Team health filters.
+
+Returns the current corporate team list, including custom teams added through employee invites:
+
+```ts
+["All Teams", "Operations", "Engineering", "Sales", "People", "Customer Success"]
 ```
 
 ### `createEmployeeInvite(input)`
@@ -103,7 +113,7 @@ This does not delete a Vively user, patient profile, health record, or billing h
 
 ### `getActivationSummary()`
 
-Used by Dashboard and Employees & Activation.
+Used by People.
 
 Returns:
 
@@ -124,7 +134,7 @@ Returns:
 
 ### `getHealthMetrics(team)`
 
-Used by Dashboard and Health Metrics.
+Used by Team health.
 
 Returns aggregate-only team health data:
 
@@ -146,7 +156,7 @@ Returns aggregate-only team health data:
 
 ### `getBillingSummary()`
 
-Used by Dashboard and Billing.
+Used by Billing.
 
 Returns current billing summary plus charge history.
 

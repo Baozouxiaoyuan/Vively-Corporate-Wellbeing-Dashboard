@@ -2,7 +2,7 @@ export type InviteStatus = "invited" | "opened" | "continued_to_vively";
 export type SignupMatchStatus = "not_found" | "found";
 export type MembershipStatus = "inactive" | "active";
 export type BaselineStatus = "not_started" | "booked" | "completed";
-export type ChargeType = "enrollment" | "test_surcharge" | "monthly_subscription";
+export type ChargeType = "annual_membership" | "test_surcharge";
 export type ChargeStatus = "charged" | "pending" | "failed";
 
 export interface CorporateAccount {

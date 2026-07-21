@@ -8,7 +8,7 @@ interface HealthCategoryMatrixProps {
 
 export function HealthCategoryMatrix({ categories }: HealthCategoryMatrixProps) {
   return (
-    <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft">
+    <section className="rounded-2xl border border-ink/10 bg-white p-6 shadow-soft">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-base font-semibold tracking-normal text-ink">Health categories across the team</h2>

@@ -1,6 +1,6 @@
-import { CreditCard, Users } from "lucide-react";
+import { CreditCard, ShieldCheck, Users } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getBillingSummary } from "../api/mockApi";
+import { getBillingSummary } from "../api";
 import { DataTable } from "../components/ui/DataTable";
 import { MetricCard } from "../components/ui/MetricCard";
 import { PageHeader } from "../components/ui/PageHeader";
@@ -19,24 +19,39 @@ export function BillingPage() {
 
   return (
     <>
-      <PageHeader title="Billing" description="Mock billing view for prototype planning. No Stripe or production payment logic is connected." />
+      <PageHeader title="Billing" description="Card-on-file billing for the corporate MVP. Payment processing is represented as prototype data only." />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Plan" value={formatCurrency(summary.account.plan_price_cents)} helper="Per active employee" icon={CreditCard} />
-        <MetricCard label="Billable employees" value={summary.employee_count} helper="Current mock period" icon={Users} />
+        <MetricCard label="Annual price" value={formatCurrency(summary.account.plan_price_cents)} helper="Per activated employee" icon={CreditCard} />
+        <MetricCard label="Billable employees" value={summary.employee_count} helper="Activated this billing period" icon={Users} />
         <MetricCard label="Current period" value={summary.current_period} helper={summary.account.company_name} />
         <MetricCard label="Amount due" value={formatCurrency(summary.current_amount_cents)} helper={summary.current_status} />
       </div>
-      <section className="mt-6 rounded-lg border border-ink/10 bg-white p-5 shadow-soft">
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-          <div>
-            <h2 className="text-base font-semibold">Current company plan</h2>
-            <p className="mt-1 text-sm text-ink/60">
-              {summary.account.company_name} is using the MVP corporate plan with invite code {summary.account.invite_code}.
-            </p>
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <section className="rounded-2xl border border-ink/10 bg-white p-6 shadow-soft">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <div>
+              <h2 className="text-base font-semibold">Current company plan</h2>
+              <p className="mt-1 text-sm text-ink/60">
+                {summary.account.company_name} is billed {formatCurrency(summary.account.plan_price_cents)} per employee per year when an employee activates.
+              </p>
+              <p className="mt-2 text-sm text-ink/60">
+                Two Baseline Health Checks are included for Medicare-eligible employees. Non-Medicare employees may incur a test surcharge.
+              </p>
+            </div>
+            <StatusBadge value={summary.current_status} />
           </div>
-          <StatusBadge value={summary.current_status} />
-        </div>
-      </section>
+        </section>
+        <section className="rounded-2xl border border-ink/10 bg-white p-6 shadow-soft">
+          <div className="flex items-start gap-3">
+            <ShieldCheck className="mt-0.5 h-5 w-5 text-teal" />
+            <div>
+              <h2 className="text-base font-semibold">Payment method</h2>
+              <p className="mt-1 text-sm text-ink/60">Visa ending in 4242. Raw card details are never stored by Vively.</p>
+              <p className="mt-2 text-sm text-ink/60">Production card capture should use Stripe Elements or an equivalent tokenised provider.</p>
+            </div>
+          </div>
+        </section>
+      </div>
       <div className="mt-6">
         <DataTable
           data={summary.history}

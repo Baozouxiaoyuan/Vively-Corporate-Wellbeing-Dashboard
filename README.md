@@ -20,10 +20,10 @@ npm run build
 ## Pages
 
 - `/login` - prototype corporate admin entry point
-- `/dashboard` - account, activation, billing and aggregate health overview
-- `/employees` - employee invites, email sending mock, activation summary and funnel
-- `/health-metrics` - aggregate-only health metrics with privacy threshold handling
+- `/health-metrics` - first page after sign in, with aggregate-only team health metrics and privacy threshold handling
+- `/employees` - people, employee invites, email sending mock, activation summary and funnel
 - `/billing` - mock billing summary and charge history
+- `/settings` - company profile, admins and privacy rules
 
 The old `/activation` route redirects to `/employees` because activation is now part of the employee workflow.
 
@@ -60,3 +60,28 @@ docs/             API and integration notes
 
 The current frontend API contract is documented in `docs/MOCK_API_SPEC.md`.
 
+## Backend Prototype
+
+This repo also includes a small corporate backend prototype:
+
+```bash
+npm run setup:backend
+npm run server
+```
+
+It runs at `http://localhost:4000` and exposes dashboard APIs under `/api`.
+
+To run the frontend against the backend:
+
+```bash
+npm run server
+npm run dev:backend
+```
+
+Default `npm run dev` still uses the in-browser mock API so the prototype can run without a backend server.
+
+Backend design notes:
+
+- `backend/README.md`
+- `backend/corporate-schema.sql`
+- `docs/CORPORATE_BACKEND_PLAN.md`

@@ -1,7 +1,8 @@
-import { CheckCircle2, Copy, ExternalLink, Mail, MailOpen, MousePointerClick, Plus, Search, Send, UserCheck, Users } from "lucide-react";
+import { CheckCircle2, Copy, ExternalLink, MailOpen, MousePointerClick, Plus, Search, Send, UserCheck, Users, X } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { createEmployeeInvite, getActivationSummary, getEmployees, removeEmployee, sendEmployeeInviteEmail } from "../api/mockApi";
+import { createEmployeeInvite, getActivationSummary, getEmployees, removeEmployee, sendEmployeeInviteEmail } from "../api";
 import { DataTable } from "../components/ui/DataTable";
 import { MetricCard } from "../components/ui/MetricCard";
 import { PageHeader } from "../components/ui/PageHeader";
@@ -12,6 +13,7 @@ import { productConfig } from "../config/product";
 import { ActivationSummary, CorporatePatient } from "../types/corporate";
 
 export function EmployeesPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [employees, setEmployees] = useState<CorporatePatient[]>([]);
   const [summary, setSummary] = useState<ActivationSummary | null>(null);
   const [form, setForm] = useState({ email: "", full_name: "", team_name: productConfig.teams[0], has_medicare: true });
@@ -19,6 +21,7 @@ export function EmployeesPage() {
   const [search, setSearch] = useState("");
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [sendingEmailIds, setSendingEmailIds] = useState<number[]>([]);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   useEffect(() => {
     void Promise.all([getEmployees(), getActivationSummary()]).then(([employeesData, summaryData]) => {
@@ -26,6 +29,19 @@ export function EmployeesPage() {
       setSummary(summaryData);
     });
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get("invite") === "1") {
+      setInviteOpen(true);
+    }
+  }, [searchParams]);
+
+  function closeInviteDialog() {
+    setInviteOpen(false);
+    if (searchParams.has("invite")) {
+      setSearchParams({});
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -37,6 +53,7 @@ export function EmployeesPage() {
     setSummary(await getActivationSummary());
     setForm({ email: "", full_name: "", team_name: productConfig.teams[0], has_medicare: true });
     setCustomTeam("");
+    closeInviteDialog();
   }
 
   async function copyInvite(token: string) {
@@ -70,7 +87,16 @@ export function EmployeesPage() {
 
   return (
     <>
-      <PageHeader title="Employees & Activation" description="Invite employees, send onboarding emails and monitor activation progress from one operational view." />
+      <PageHeader
+        title="People"
+        description="Invite employees, send onboarding emails and monitor activation progress from one operational view."
+        action={
+          <Button type="button" className="h-11 px-5" onClick={() => setInviteOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Invite employees
+          </Button>
+        }
+      />
       {summary ? (
         <>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -83,7 +109,7 @@ export function EmployeesPage() {
             <MetricCard label="Activation rate" value={`${summary.activation_rate}%`} helper="Continued / invited" />
             <MetricCard label="Baseline completion" value={`${summary.baseline_completion_rate}%`} helper={`${summary.membership_rate}% membership rate`} />
           </div>
-          <section className="my-6 rounded-lg border border-ink/10 bg-white p-5 shadow-soft">
+          <section className="my-6 rounded-2xl border border-ink/10 bg-white p-6 shadow-soft">
             <h2 className="mb-4 text-base font-semibold">Activation funnel</h2>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
@@ -99,27 +125,51 @@ export function EmployeesPage() {
           </section>
         </>
       ) : null}
-      <form onSubmit={handleSubmit} className="mb-6 rounded-2xl border border-ink/10 bg-white p-5 shadow-soft">
-        <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1fr_auto_auto] lg:items-end">
-          <Field label="Full name" value={form.full_name} onChange={(value) => setForm({ ...form, full_name: value })} required />
-          <Field label="Email" type="email" value={form.email} onChange={(value) => setForm({ ...form, email: value })} required />
-          <TeamField
-            value={form.team_name}
-            customTeam={customTeam}
-            onChange={(value) => setForm({ ...form, team_name: value })}
-            onCustomTeamChange={setCustomTeam}
-          />
-          <label className="flex h-10 items-center gap-2 rounded-full border border-neutral-300 bg-neutral-50 px-4 text-sm text-ink/70">
-            <input type="checkbox" checked={form.has_medicare} onChange={(event) => setForm({ ...form, has_medicare: event.target.checked })} />
-            Medicare
-          </label>
-          <Button className="h-10">
-            <Plus className="h-4 w-4" />
-            Invite
-          </Button>
+      {inviteOpen ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-ink/30 px-4 py-8">
+          <div className="max-h-full w-full max-w-3xl overflow-auto rounded-2xl bg-white shadow-soft">
+            <div className="flex items-start justify-between gap-4 border-b border-ink/10 p-6">
+              <div>
+                <h2 className="text-2xl font-semibold tracking-normal text-ink">Invite employees</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-ink/60">
+                  Employees receive an invitation to set up Vively and book their Baseline. Each employee is billed from the card on file when they sign up.
+                </p>
+              </div>
+              <button type="button" className="grid h-9 w-9 place-items-center rounded-md text-ink/55 hover:bg-mist" onClick={closeInviteDialog} aria-label="Close invite dialog">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Full name" value={form.full_name} onChange={(value) => setForm({ ...form, full_name: value })} required />
+                  <Field label="Email" type="email" value={form.email} onChange={(value) => setForm({ ...form, email: value })} required />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
+                  <TeamField value={form.team_name} customTeam={customTeam} onChange={(value) => setForm({ ...form, team_name: value })} onCustomTeamChange={setCustomTeam} />
+                  <label className="flex h-10 items-center gap-2 rounded-full border border-neutral-300 bg-neutral-50 px-4 text-sm text-ink/70">
+                    <input type="checkbox" checked={form.has_medicare} onChange={(event) => setForm({ ...form, has_medicare: event.target.checked })} />
+                    Medicare
+                  </label>
+                </div>
+                <div className="flex flex-col gap-3 border-t border-ink/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm text-ink/55">{form.email ? "1 ready to invite" : "0 ready to invite"}</p>
+                  <div className="flex justify-end gap-3">
+                    <Button type="button" variant="secondary" onClick={closeInviteDialog}>
+                      Cancel
+                    </Button>
+                    <Button type="submit">
+                      <Send className="h-4 w-4" />
+                      Send invitation
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
         </div>
-      </form>
-      <div className="mb-4 flex flex-col gap-3 rounded-lg border border-ink/10 bg-white p-4 shadow-soft sm:flex-row sm:items-center sm:justify-between">
+      ) : null}
+      <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-ink/10 bg-white p-4 shadow-soft sm:flex-row sm:items-center sm:justify-between">
         <label className="flex min-w-0 flex-1 items-center gap-3 rounded-md border border-ink/10 bg-mist px-3 py-2 text-sm text-ink/70 sm:max-w-md">
           <Search className="h-4 w-4 shrink-0" />
           <input
@@ -152,30 +202,23 @@ export function EmployeesPage() {
             ),
           },
           {
-            header: "Email delivery",
+            header: "Action",
             cell: (employee) => {
               const isSending = sendingEmailIds.includes(employee.id);
-              const isQueued = employee.email_sent_at === null;
-
-              if (!isQueued) {
-                return <span className="rounded-full bg-sage/15 px-3 py-1 text-xs font-semibold text-teal">Sent</span>;
-              }
+              const emailLabel = employee.email_sent_at ? "Resend" : "Send email";
 
               return (
-                <Button type="button" variant="subtle" size="s" loading={isSending} onClick={() => void sendInviteEmail(employee.id)}>
-                  <Send className="h-3.5 w-3.5" />
-                  Send email
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="subtle" size="s" loading={isSending} onClick={() => void sendInviteEmail(employee.id)}>
+                    <Send className="h-3.5 w-3.5" />
+                    {emailLabel}
+                  </Button>
+                  <Button type="button" variant="secondary" size="s" onClick={() => void handleRemoveEmployee(employee)}>
+                    Remove
+                  </Button>
+                </div>
               );
             },
-          },
-          {
-            header: "Action",
-            cell: (employee) => (
-              <Button type="button" variant="secondary" size="s" onClick={() => void handleRemoveEmployee(employee)}>
-                Remove
-              </Button>
-            ),
           },
         ]}
       />

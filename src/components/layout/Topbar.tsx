@@ -3,7 +3,7 @@ import { corporateAccountMock } from "../../data/employees.mock";
 
 export function Topbar() {
   return (
-    <header className="sticky top-0 z-10 border-b border-ink/10 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-10 border-b border-ink/10 bg-mist/90 backdrop-blur">
       <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div className="min-w-0">
           <div className="text-sm font-semibold text-ink">Corporate admin</div>

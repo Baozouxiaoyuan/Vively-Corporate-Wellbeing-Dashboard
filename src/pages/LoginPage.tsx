@@ -27,7 +27,7 @@ export function LoginPage() {
             Password
           </label>
           <Input id="password" type="password" className="mt-2" defaultValue="prototype" />
-          <Button type="button" className="mt-6 w-full" onClick={() => navigate("/dashboard")}>
+          <Button type="button" className="mt-6 w-full" onClick={() => navigate("/health-metrics")}>
             <LogIn className="h-4 w-4" />
             Sign in
           </Button>

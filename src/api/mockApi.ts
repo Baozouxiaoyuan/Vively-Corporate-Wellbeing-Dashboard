@@ -24,6 +24,11 @@ export async function getEmployees(): Promise<CorporatePatient[]> {
   return [...employees];
 }
 
+export async function getTeams(): Promise<string[]> {
+  await wait();
+  return ["All Teams", ...Array.from(new Set(employees.map((employee) => employee.team_name)))];
+}
+
 export async function resolveVivelyUserByEmail(email: string): Promise<VivelyEmailResolverResult> {
   await wait();
   const existing = employees.find((employee) => employee.email.toLowerCase() === email.toLowerCase());
@@ -124,7 +129,17 @@ export async function getActivationSummary(): Promise<ActivationSummary> {
 
 export async function getHealthMetrics(team = "All Teams"): Promise<HealthMetricCohort> {
   await wait();
-  return healthMetricsMock.find((metric) => metric.team === team) ?? healthMetricsMock[0];
+  const existing = healthMetricsMock.find((metric) => metric.team === team);
+  if (existing) return existing;
+
+  return {
+    team,
+    cohort_size: employees.filter((employee) => employee.team_name === team).length,
+    optimal_biomarker_percentage: 0,
+    in_range_biomarker_percentage: 0,
+    needs_attention_percentage: 0,
+    category_distribution: [],
+  };
 }
 
 export async function getBillingSummary(): Promise<BillingSummary> {
