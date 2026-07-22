@@ -81,7 +81,7 @@ export function HealthMetricsPage() {
             <section className="rounded-2xl border border-ink/10 bg-white p-6 shadow-soft">
               <div className="flex items-center gap-3">
                 <TrendingUp className="h-5 w-5 text-teal" />
-                <h2 className="text-base font-semibold text-ink">Vively score</h2>
+                <h2 className="text-base font-semibold text-ink">Vitality score</h2>
               </div>
               <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
