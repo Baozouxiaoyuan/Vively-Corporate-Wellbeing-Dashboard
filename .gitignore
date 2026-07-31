@@ -5,3 +5,4 @@ __pycache__/
 vite.config.js
 vite.config.d.ts
 .DS_Store
+outputs/
