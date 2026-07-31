@@ -1,0 +1,323 @@
+{
+  "info": {
+    "_postman_id": "43b37275-6ef3-4f4d-99c2-vively-dashboard-target",
+    "name": "Vively Corporate Dashboard Target API",
+    "description": "Postman collection aligned with Anton's target Vively /v2 company-scoped API contract. The local FastAPI prototype implements these shapes for handoff testing.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:4000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "prototype-token",
+      "type": "string"
+    },
+    {
+      "key": "companyId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "memberId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "teamId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "belowThresholdTeamId",
+      "value": "4",
+      "type": "string"
+    },
+    {
+      "key": "inviteToken",
+      "value": "example-token",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Login",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"ryua7873@uni.sydney.edu.au\",\n  \"password\": \"password\",\n  \"device\": \"corporate-dashboard-web\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v2/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "login"]
+        },
+        "description": "Target auth shape. The local prototype returns a placeholder token."
+      }
+    },
+    {
+      "name": "Get Company",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v2/companies/{{companyId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "companies", "{{companyId}}"]
+        },
+        "description": "Returns the company resource in a top-level data envelope."
+      }
+    },
+    {
+      "name": "Get Members",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v2/companies/{{companyId}}/members",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "companies", "{{companyId}}", "members"]
+        },
+        "description": "Returns corporate members. No raw Vively user id, patient id, team id or invite token is exposed."
+      }
+    },
+    {
+      "name": "Get Teams",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v2/companies/{{companyId}}/teams",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "companies", "{{companyId}}", "teams"]
+        },
+        "description": "Returns first-class team entities with stable ids and member counts."
+      }
+    },
+    {
+      "name": "Create Team",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Marketing\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v2/companies/{{companyId}}/teams",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "companies", "{{companyId}}", "teams"]
+        },
+        "description": "Creates a first-class team before inviting a member into it."
+      }
+    },
+    {
+      "name": "Rename Team",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Operations\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v2/companies/{{companyId}}/teams/{{teamId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "companies", "{{companyId}}", "teams", "{{teamId}}"]
+        },
+        "description": "Renames a team."
+      }
+    },
+    {
+      "name": "Delete Team",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v2/companies/{{companyId}}/teams/{{teamId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "companies", "{{companyId}}", "teams", "{{teamId}}"]
+        },
+        "description": "Deletes a team. Returns 422 if the team still has members."
+      }
+    },
+    {
+      "name": "Invite Member Into Team",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"new.member@northstar.example\",\n  \"first_name\": \"New\",\n  \"last_name\": \"Member\",\n  \"has_medicare\": true\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v2/companies/{{companyId}}/teams/{{teamId}}/members",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "companies", "{{companyId}}", "teams", "{{teamId}}", "members"]
+        },
+        "description": "Invites a member into the team identified by the URL."
+      }
+    },
+    {
+      "name": "Send or Resend Member Invitation",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v2/companies/{{companyId}}/members/{{memberId}}/invitation",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "companies", "{{companyId}}", "members", "{{memberId}}", "invitation"]
+        },
+        "description": "Sends or resends the member invitation email."
+      }
+    },
+    {
+      "name": "Delete Member",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v2/companies/{{companyId}}/members/{{memberId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "companies", "{{companyId}}", "members", "{{memberId}}"]
+        },
+        "description": "Removes the corporate member row only. It never deletes Vively user, patient or health records."
+      }
+    },
+    {
+      "name": "Get Activation Summary",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v2/companies/{{companyId}}/activation-summary",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "companies", "{{companyId}}", "activation-summary"]
+        },
+        "description": "Returns activation funnel counts and activation rate."
+      }
+    },
+    {
+      "name": "Get Company Health Metrics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v2/companies/{{companyId}}/health-metrics",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "companies", "{{companyId}}", "health-metrics"]
+        },
+        "description": "Returns company-wide aggregate health metrics."
+      }
+    },
+    {
+      "name": "Get Team Health Metrics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v2/companies/{{companyId}}/teams/{{teamId}}/health-metrics",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "companies", "{{companyId}}", "teams", "{{teamId}}", "health-metrics"]
+        },
+        "description": "Returns aggregate health metrics for a selected team."
+      }
+    },
+    {
+      "name": "Get Below Threshold Team Health Metrics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v2/companies/{{companyId}}/teams/{{belowThresholdTeamId}}/health-metrics",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "companies", "{{companyId}}", "teams", "{{belowThresholdTeamId}}", "health-metrics"]
+        },
+        "description": "Shows the privacy response: below_privacy_threshold true and categories null."
+      }
+    },
+    {
+      "name": "Get Billing",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v2/companies/{{companyId}}/billing",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "companies", "{{companyId}}", "billing"]
+        },
+        "description": "Returns annual membership billing summary and charge history."
+      }
+    },
+    {
+      "name": "Resolve Public Invitation",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v2/invitations/{{inviteToken}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "invitations", "{{inviteToken}}"]
+        },
+        "description": "Public invitation route. No bearer token required."
+      }
+    },
+    {
+      "name": "Accept Public Invitation",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v2/invitations/{{inviteToken}}/accept",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "invitations", "{{inviteToken}}", "accept"]
+        },
+        "description": "Public invitation acceptance route. No bearer token required."
+      }
+    }
+  ]
+}

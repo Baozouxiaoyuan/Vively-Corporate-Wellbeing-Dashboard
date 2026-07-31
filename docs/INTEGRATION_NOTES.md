@@ -19,7 +19,6 @@ The dashboard needs a corporate-facing layer for:
 - Corporate account details
 - Employee invite records
 - Team labels
-- Email delivery status
 - Employee-to-Vively user/patient references
 - Activation summary
 - Aggregate health metrics
@@ -29,7 +28,7 @@ Some of this can live in our own backend. Some parts need Vively support, especi
 
 ## Main Vively Support Needed
 
-- Resolve an employee email to Vively `user_id` and `patient_id`
+- Resolve employee identity internally on the backend where needed
 - Confirm consent or permission for including a user in corporate aggregates
 - Provide or allow backend calculation of aggregate health metrics
 - Send real invitation emails
@@ -41,16 +40,21 @@ The frontend expects aggregate results like:
 
 ```ts
 {
-  team: "All Teams",
+  scope: "company",
+  team: null,
   cohort_size: 34,
-  optimal_biomarker_percentage: 54,
-  in_range_biomarker_percentage: 31,
-  needs_attention_percentage: 15,
-  category_distribution: [
-    { category: "Nutrients", optimal: 44, in_range: 38, needs_attention: 18 }
+  below_privacy_threshold: false,
+  categories: [
+    {
+      name: "Nutrients",
+      average_score: 44,
+      trend: "down",
+      optimal: 44,
+      in_range: 38,
+      needs_attention: 18
+    }
   ]
 }
 ```
 
-The backend should enforce the privacy threshold before returning this data.
-
+The backend should enforce the privacy threshold before returning this data. Below-threshold responses should return `categories: null`.

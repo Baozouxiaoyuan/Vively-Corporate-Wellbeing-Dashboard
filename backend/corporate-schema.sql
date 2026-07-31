@@ -35,14 +35,29 @@ CREATE TABLE corporate_admins (
   -- FOREIGN KEY (vively_user_id) REFERENCES users (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE corporate_employees (
+CREATE TABLE corporate_teams (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   corporate_account_id BIGINT UNSIGNED NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NULL DEFAULT NULL,
+  updated_at TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY corporate_teams_account_name_unique (corporate_account_id, name),
+  CONSTRAINT corporate_teams_account_foreign
+    FOREIGN KEY (corporate_account_id) REFERENCES corporate_accounts (id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE corporate_members (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  corporate_account_id BIGINT UNSIGNED NOT NULL,
+  team_id BIGINT UNSIGNED NOT NULL,
   email VARCHAR(255) NOT NULL,
-  full_name VARCHAR(255) NOT NULL,
-  team_name VARCHAR(255) NOT NULL,
+  first_name VARCHAR(255) NOT NULL,
+  last_name VARCHAR(255) NOT NULL,
   has_medicare TINYINT(1) NOT NULL DEFAULT 1,
-  invite_token VARCHAR(100) NOT NULL,
+  -- Internal token for public invitation URLs. It is never returned in the member list API.
+  invitation_token VARCHAR(100) NOT NULL,
   invite_status ENUM('invited','opened','continued_to_vively') NOT NULL DEFAULT 'invited',
   signup_match_status ENUM('not_found','found') NOT NULL DEFAULT 'not_found',
   -- These match existing Vively users.id and patients.id.
@@ -59,14 +74,17 @@ CREATE TABLE corporate_employees (
   created_at TIMESTAMP NULL DEFAULT NULL,
   updated_at TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (id),
-  UNIQUE KEY corporate_employees_invite_token_unique (invite_token),
-  UNIQUE KEY corporate_employees_account_email_unique (corporate_account_id, email),
-  KEY corporate_employees_vively_user_id_index (vively_user_id),
-  KEY corporate_employees_vively_patient_id_index (vively_patient_id),
-  KEY corporate_employees_team_name_index (team_name),
-  CONSTRAINT corporate_employees_account_foreign
+  UNIQUE KEY corporate_members_invitation_token_unique (invitation_token),
+  UNIQUE KEY corporate_members_account_email_unique (corporate_account_id, email),
+  KEY corporate_members_vively_user_id_index (vively_user_id),
+  KEY corporate_members_vively_patient_id_index (vively_patient_id),
+  KEY corporate_members_team_id_index (team_id),
+  CONSTRAINT corporate_members_account_foreign
     FOREIGN KEY (corporate_account_id) REFERENCES corporate_accounts (id)
-    ON DELETE CASCADE
+    ON DELETE CASCADE,
+  CONSTRAINT corporate_members_team_foreign
+    FOREIGN KEY (team_id) REFERENCES corporate_teams (id)
+    ON DELETE RESTRICT
   -- Future Vively codebase integration can add:
   -- FOREIGN KEY (vively_user_id) REFERENCES users (id) ON DELETE SET NULL
   -- FOREIGN KEY (vively_patient_id) REFERENCES patients (id) ON DELETE SET NULL

@@ -1,13 +1,11 @@
-import { AlertTriangle, Apple, BarChart3, CheckCircle2, Download, FlaskConical, Footprints, Lightbulb, Moon, Salad, Sparkles, Stethoscope, Target, TrendingUp, Users, Zap } from "lucide-react";
+import { Apple, BarChart3, CheckCircle2, Download, FlaskConical, Footprints, Lightbulb, Moon, Salad, Sparkles, Stethoscope, TrendingUp, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { getHealthMetrics, getTeams } from "../api";
+import { getCompanyHealthMetrics, getTeamHealthMetrics, getTeams } from "../api";
 import { HealthCategoryMatrix } from "../components/health/HealthCategoryMatrix";
-import { MetricCard } from "../components/ui/MetricCard";
 import { PageHeader } from "../components/ui/PageHeader";
 import { InsufficientData, PrivacyNotice } from "../components/ui/PrivacyNotice";
 import { productConfig } from "../config/product";
-import { HealthMetricCohort } from "../types/corporate";
+import { CorporateTeam, HealthCategory, HealthMetrics } from "../types/corporate";
 
 const futureTeamSignals = [
   { icon: Zap, title: "Energy and wellbeing", value: "7.6 / 10", text: "From quick in-app check-ins. Linked to job satisfaction." },
@@ -23,27 +21,22 @@ const comparisonRows = [
 ];
 
 export function HealthMetricsPage() {
-  const [team, setTeam] = useState("All Teams");
-  const [teams, setTeams] = useState<string[]>(["All Teams", ...productConfig.teams]);
-  const [metrics, setMetrics] = useState<HealthMetricCohort | null>(null);
+  const [teamId, setTeamId] = useState("company");
+  const [teams, setTeams] = useState<CorporateTeam[]>([]);
+  const [metrics, setMetrics] = useState<HealthMetrics | null>(null);
 
   useEffect(() => {
     void getTeams().then(setTeams);
   }, []);
 
   useEffect(() => {
-    void getHealthMetrics(team).then(setMetrics);
-  }, [team]);
+    const request = teamId === "company" ? getCompanyHealthMetrics() : getTeamHealthMetrics(Number(teamId));
+    void request.then(setMetrics);
+  }, [teamId]);
 
-  const strongestCategories = metrics ? [...metrics.category_distribution].sort((a, b) => b.optimal - a.optimal).slice(0, 3) : [];
-  const needsAttentionCategories = metrics ? [...metrics.category_distribution].sort((a, b) => b.needs_attention - a.needs_attention).slice(0, 3) : [];
-  const biomarkerStatus = metrics
-    ? [
-        { status: "Optimal", value: metrics.optimal_biomarker_percentage },
-        { status: "In range", value: metrics.in_range_biomarker_percentage },
-        { status: "Needs attention", value: metrics.needs_attention_percentage },
-      ]
-    : [];
+  const categories = metrics?.categories ?? [];
+  const strongestCategories = [...categories].sort((a, b) => b.optimal - a.optimal).slice(0, 3);
+  const needsAttentionCategories = [...categories].sort((a, b) => b.needs_attention - a.needs_attention).slice(0, 3);
 
   return (
     <>
@@ -53,9 +46,12 @@ export function HealthMetricsPage() {
         description={metrics ? `Based on ${metrics.cohort_size} completed Baselines. Aggregated and de-identified.` : "Anonymised aggregate health signals for cohorts that meet the privacy threshold."}
         action={
           <div className="flex flex-col gap-2 sm:flex-row">
-            <select value={team} onChange={(event) => setTeam(event.target.value)} className="h-10 rounded-md border border-ink/10 bg-white px-3 text-sm outline-none focus:border-teal">
-              {teams.map((teamName) => (
-                <option key={teamName}>{teamName}</option>
+            <select value={teamId} onChange={(event) => setTeamId(event.target.value)} className="h-10 rounded-md border border-ink/10 bg-white px-3 text-sm outline-none focus:border-teal">
+              <option value="company">All Teams</option>
+              {teams.map((team) => (
+                <option key={team.id} value={team.id}>
+                  {team.name}
+                </option>
               ))}
             </select>
             <button className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-ink/10 bg-white px-4 text-sm font-semibold text-ink/70 hover:bg-mist">
@@ -70,7 +66,7 @@ export function HealthMetricsPage() {
           Your team's vitality is <span className="font-semibold">strong and climbing</span>, tracking younger than the Australian average.
         </p>
       </section>
-      {!metrics ? null : metrics.cohort_size < productConfig.privacyThreshold ? (
+      {!metrics ? null : metrics.below_privacy_threshold ? (
         <div className="mt-6 space-y-6">
           <InsufficientData threshold={productConfig.privacyThreshold} cohortSize={metrics.cohort_size} />
           <PrivacyNotice />
@@ -113,26 +109,6 @@ export function HealthMetricsPage() {
               </div>
             </section>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="Cohort size" value={metrics.cohort_size} helper={`Threshold: ${productConfig.privacyThreshold}+ employees`} icon={Users} />
-            <MetricCard label="Optimal biomarkers" value={`${metrics.optimal_biomarker_percentage}%`} helper={`${metrics.in_range_biomarker_percentage}% are still in range`} icon={CheckCircle2} />
-            <MetricCard label="In range" value={`${metrics.in_range_biomarker_percentage}%`} helper="Within reference range" icon={Target} />
-            <MetricCard label="Needs attention" value={`${metrics.needs_attention_percentage}%`} helper="Outside normal range" icon={AlertTriangle} />
-          </div>
-          <section className="rounded-2xl border border-ink/10 bg-white p-6 shadow-soft">
-            <h2 className="text-base font-semibold text-ink">Biomarker status summary</h2>
-            <div className="mt-4 h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={biomarkerStatus}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="status" tickLine={false} axisLine={false} />
-                  <YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} tickLine={false} axisLine={false} />
-                  <Tooltip formatter={(value) => [`${value}%`, "Share"]} />
-                  <Bar dataKey="value" fill="#237a73" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </section>
           <section className="rounded-2xl border border-ink/10 bg-white p-6 shadow-soft">
             <h2 className="text-base font-semibold text-ink">Category summary</h2>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -141,7 +117,7 @@ export function HealthMetricsPage() {
             </div>
           </section>
           <TeamComparison />
-          <HealthCategoryMatrix categories={metrics.category_distribution} />
+          <HealthCategoryMatrix categories={categories} />
           <section className="rounded-2xl border border-ink/10 bg-white p-6 shadow-soft">
             <div className="flex items-center gap-3">
               <Lightbulb className="h-5 w-5 text-teal" />
@@ -180,7 +156,7 @@ function CategoryList({
   tone,
 }: {
   title: string;
-  items: HealthMetricCohort["category_distribution"];
+  items: HealthCategory[];
   valueKey: "optimal" | "needs_attention";
   suffix: string;
   tone: "green" | "amber";
@@ -192,8 +168,8 @@ function CategoryList({
       <h3 className="text-sm font-semibold text-ink">{title}</h3>
       <div className="mt-3 space-y-2">
         {items.map((item) => (
-          <div key={item.category} className="flex items-center justify-between gap-3 rounded-md bg-white px-3 py-2">
-            <span className="text-sm font-medium text-ink/75">{item.category}</span>
+          <div key={item.name} className="flex items-center justify-between gap-3 rounded-md bg-white px-3 py-2">
+            <span className="text-sm font-medium text-ink/75">{item.name}</span>
             <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${pillClass}`}>
               {item[valueKey]}% {suffix}
             </span>

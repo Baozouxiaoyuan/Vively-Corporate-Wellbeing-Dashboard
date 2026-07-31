@@ -1,5 +1,5 @@
 import { Bell } from "lucide-react";
-import { corporateAccountMock } from "../../data/employees.mock";
+import { companyMock } from "../../data/employees.mock";
 
 export function Topbar() {
   return (
@@ -14,8 +14,10 @@ export function Topbar() {
             <Bell className="h-4 w-4" />
           </button>
           <div className="hidden text-right sm:block">
-            <div className="text-sm font-semibold">{corporateAccountMock.admin_name}</div>
-            <div className="text-xs text-ink/55">{corporateAccountMock.company_name}</div>
+            <div className="text-sm font-semibold">
+              {companyMock.primary_admin.first_name} {companyMock.primary_admin.last_name}
+            </div>
+            <div className="text-xs text-ink/55">{companyMock.company_name}</div>
           </div>
         </div>
       </div>

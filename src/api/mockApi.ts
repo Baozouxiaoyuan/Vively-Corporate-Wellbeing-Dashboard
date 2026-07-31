@@ -1,156 +1,189 @@
-import { billingChargesMock } from "../data/billing.mock";
-import { corporateAccountMock, employeesMock } from "../data/employees.mock";
+import { billingSummaryMock } from "../data/billing.mock";
+import { companyMock, membersMock, teamsMock } from "../data/employees.mock";
 import { healthMetricsMock } from "../data/healthMetrics.mock";
 import {
   ActivationSummary,
+  AuthSession,
   BillingSummary,
-  CorporatePatient,
-  CreateEmployeeInviteInput,
-  HealthMetricCohort,
-  VivelyEmailResolverResult,
+  Company,
+  CorporateMember,
+  CorporateTeam,
+  CreateMemberInviteInput,
+  HealthMetrics,
 } from "../types/corporate";
 
-let employees = [...employeesMock];
+let members = [...membersMock];
+let teams = [...teamsMock];
 
 const wait = async (ms = 180) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
-export async function getCorporateAccount() {
-  await wait();
-  return corporateAccountMock;
-}
-
-export async function getEmployees(): Promise<CorporatePatient[]> {
-  await wait();
-  return [...employees];
-}
-
-export async function getTeams(): Promise<string[]> {
-  await wait();
-  return ["All Teams", ...Array.from(new Set(employees.map((employee) => employee.team_name)))];
-}
-
-export async function resolveVivelyUserByEmail(email: string): Promise<VivelyEmailResolverResult> {
-  await wait();
-  const existing = employees.find((employee) => employee.email.toLowerCase() === email.toLowerCase());
-  if (existing?.signup_match_status === "found") {
-    return {
-      exists: true,
-      vively_user_id: existing.vively_user_id,
-      vively_patient_id: existing.vively_patient_id,
-      userable_type: "Patient",
-      link_status: "patient_linked",
-    };
-  }
-
+function teamWithCurrentCount(team: CorporateTeam): CorporateTeam {
   return {
-    exists: false,
-    vively_user_id: null,
-    vively_patient_id: null,
-    userable_type: null,
-    link_status: "not_found",
+    ...team,
+    member_count: members.filter((member) => member.team.id === team.id).length,
   };
 }
 
-export async function createEmployeeInvite(input: CreateEmployeeInviteInput): Promise<CorporatePatient> {
+function refreshTeamCounts() {
+  teams = teams.map(teamWithCurrentCount);
+  members = members.map((member) => ({
+    ...member,
+    team: teamWithCurrentCount(member.team),
+  }));
+}
+
+export async function login(email: string, password: string): Promise<AuthSession> {
   await wait();
-  const resolver = await resolveVivelyUserByEmail(input.email);
-  const newEmployee: CorporatePatient = {
-    id: Math.max(...employees.map((employee) => employee.id)) + 1,
-    corporate_account_id: corporateAccountMock.id,
+  const session = {
+    access_token: "prototype-token",
+    id: 501,
+    email,
+    first_name: "Ruitao",
+    last_name: "Yuan",
+    userable_type: "admins",
+    userable_id: 12,
+  };
+  window.localStorage.setItem("vively_access_token", session.access_token);
+  return session;
+}
+
+export async function getCompany(): Promise<Company> {
+  await wait();
+  return companyMock;
+}
+
+export async function getMembers(): Promise<CorporateMember[]> {
+  await wait();
+  refreshTeamCounts();
+  return [...members];
+}
+
+export async function getTeams(): Promise<CorporateTeam[]> {
+  await wait();
+  refreshTeamCounts();
+  return [...teams];
+}
+
+export async function createTeam(name: string): Promise<CorporateTeam> {
+  await wait();
+  const existing = teams.find((team) => team.name.toLowerCase() === name.toLowerCase());
+  if (existing) return existing;
+
+  const created = {
+    id: Math.max(...teams.map((team) => team.id), 0) + 1,
+    name,
+    member_count: 0,
+    created_at: new Date().toISOString(),
+  };
+  teams = [...teams, created];
+  return created;
+}
+
+export async function renameTeam(teamId: number, name: string): Promise<CorporateTeam> {
+  await wait();
+  teams = teams.map((team) => (team.id === teamId ? { ...team, name } : team));
+  members = members.map((member) => (member.team.id === teamId ? { ...member, team: { ...member.team, name } } : member));
+  refreshTeamCounts();
+  const updated = teams.find((team) => team.id === teamId);
+  if (!updated) throw new Error("Team not found");
+  return updated;
+}
+
+export async function deleteTeam(teamId: number): Promise<void> {
+  await wait();
+  if (members.some((member) => member.team.id === teamId)) {
+    throw new Error("Team still has members");
+  }
+  teams = teams.filter((team) => team.id !== teamId);
+}
+
+export async function createMemberInvite(teamId: number, input: CreateMemberInviteInput): Promise<CorporateMember> {
+  await wait();
+  const team = teams.find((item) => item.id === teamId);
+  if (!team) throw new Error("Team not found");
+
+  const created: CorporateMember = {
+    id: Math.max(...members.map((member) => member.id), 0) + 1,
     email: input.email,
-    full_name: input.full_name,
-    team_name: input.team_name,
+    first_name: input.first_name,
+    last_name: input.last_name,
+    team,
     has_medicare: input.has_medicare,
-    invite_token: `inv_${crypto.randomUUID().slice(0, 8)}`,
     invite_status: "invited",
-    signup_match_status: resolver.exists ? "found" : "not_found",
-    vively_user_id: resolver.vively_user_id,
-    vively_patient_id: resolver.vively_patient_id,
+    signup_match_status: "not_found",
     membership_status: "inactive",
     baseline_status: "not_started",
     invited_at: new Date().toISOString(),
     email_sent_at: null,
     opened_at: null,
     signedup_at: null,
+    removed_at: null,
+    created_at: new Date().toISOString(),
   };
-  employees = [newEmployee, ...employees];
-  return newEmployee;
+  members = [created, ...members];
+  refreshTeamCounts();
+  return members[0];
 }
 
-export async function sendEmployeeInviteEmail(employeeId: number): Promise<CorporatePatient> {
+export async function sendMemberInvitation(memberId: number): Promise<CorporateMember> {
   await wait(450);
-  const employee = employees.find((item) => item.id === employeeId);
-  if (!employee) {
-    throw new Error("Employee invite not found");
-  }
+  const member = members.find((item) => item.id === memberId);
+  if (!member) throw new Error("Member invite not found");
 
-  const updatedEmployee = {
-    ...employee,
-    email_sent_at: new Date().toISOString(),
-  };
-
-  employees = employees.map((item) => (item.id === employeeId ? updatedEmployee : item));
-  return updatedEmployee;
+  const updated = { ...member, email_sent_at: new Date().toISOString() };
+  members = members.map((item) => (item.id === memberId ? updated : item));
+  return updated;
 }
 
-export async function removeEmployee(employeeId: number): Promise<void> {
+export async function deleteMember(memberId: number): Promise<void> {
   await wait();
-  employees = employees.filter((employee) => employee.id !== employeeId);
+  members = members.filter((member) => member.id !== memberId);
+  refreshTeamCounts();
 }
 
 export async function getActivationSummary(): Promise<ActivationSummary> {
   await wait();
-  const total = employees.length;
-  const opened = employees.filter((employee) => employee.opened_at).length;
-  const continued = employees.filter((employee) => employee.invite_status === "continued_to_vively").length;
-  const linked = employees.filter((employee) => employee.signup_match_status === "found").length;
-  const baseline = employees.filter((employee) => employee.baseline_status === "completed").length;
-  const active = employees.filter((employee) => employee.membership_status === "active").length;
+  const total = members.length || 1;
+  const opened = members.filter((member) => member.opened_at).length;
+  const continued = members.filter((member) => member.invite_status === "continued_to_vively").length;
+  const active = members.filter((member) => member.membership_status === "active").length;
+  const baseline = members.filter((member) => member.baseline_status === "completed").length;
 
   return {
-    total_invited: total,
-    opened_invites: opened,
-    continued_to_vively: continued,
-    linked_employees: linked,
-    baseline_completed: baseline,
-    active_memberships: active,
-    activation_rate: Math.round((continued / total) * 100),
-    baseline_completion_rate: Math.round((baseline / total) * 100),
-    membership_rate: Math.round((active / total) * 100),
-    funnel: [
-      { stage: "Invited", count: total },
-      { stage: "Opened", count: opened },
-      { stage: "Continued", count: continued },
-      { stage: "Linked", count: linked },
-      { stage: "Baseline", count: baseline },
-    ],
+    total_members: members.length,
+    funnel: {
+      invited: members.length,
+      opened,
+      continued_to_vively: continued,
+      active,
+      baseline_completed: baseline,
+    },
+    activation_rate: Number((continued / total).toFixed(2)),
   };
 }
 
-export async function getHealthMetrics(team = "All Teams"): Promise<HealthMetricCohort> {
+export async function getCompanyHealthMetrics(): Promise<HealthMetrics> {
   await wait();
-  const existing = healthMetricsMock.find((metric) => metric.team === team);
+  return healthMetricsMock[0];
+}
+
+export async function getTeamHealthMetrics(teamId: number): Promise<HealthMetrics> {
+  await wait();
+  const existing = healthMetricsMock.find((metric) => metric.team?.id === teamId);
   if (existing) return existing;
 
+  const team = teams.find((item) => item.id === teamId) ?? null;
+  const cohortSize = members.filter((member) => member.team.id === teamId).length;
   return {
+    scope: "team",
     team,
-    cohort_size: employees.filter((employee) => employee.team_name === team).length,
-    optimal_biomarker_percentage: 0,
-    in_range_biomarker_percentage: 0,
-    needs_attention_percentage: 0,
-    category_distribution: [],
+    cohort_size: cohortSize,
+    below_privacy_threshold: cohortSize < 10,
+    categories: null,
   };
 }
 
-export async function getBillingSummary(): Promise<BillingSummary> {
+export async function getBilling(): Promise<BillingSummary> {
   await wait();
-  const current = billingChargesMock[0];
-  return {
-    account: corporateAccountMock,
-    current_period: current.period,
-    employee_count: current.employee_count,
-    current_amount_cents: current.amount_cents,
-    current_status: current.status,
-    history: billingChargesMock,
-  };
+  return billingSummaryMock;
 }

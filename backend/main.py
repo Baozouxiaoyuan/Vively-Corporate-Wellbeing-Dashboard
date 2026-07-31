@@ -4,16 +4,7 @@ from fastapi import FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import services
-from .schemas import (
-    ActivationSummary,
-    BillingSummary,
-    CorporateAccount,
-    CorporateEmployee,
-    CreateEmployeeInviteInput,
-    DeleteResult,
-    HealthMetricCohort,
-    VivelyEmailResolverResult,
-)
+from .schemas import CreateMemberInviteInput, LoginInput, TeamInput
 
 
 app = FastAPI(title="Vively Corporate Dashboard Backend")
@@ -27,63 +18,117 @@ app.add_middleware(
 )
 
 
-@app.get("/api/health")
+@app.get("/v2/health")
 def health_check():
-    return {"ok": True}
+    return {"data": {"ok": True}}
 
 
-@app.get("/api/corporate-account", response_model=CorporateAccount)
-def corporate_account():
-    return services.get_corporate_account()
+@app.post("/v2/login")
+def login(input_data: LoginInput):
+    return {
+        "data": {
+            "access_token": "prototype-token",
+            "id": 501,
+            "email": input_data.email,
+            "first_name": "Ruitao",
+            "last_name": "Yuan",
+            "userable_type": "admins",
+            "userable_id": 12,
+        }
+    }
 
 
-@app.get("/api/employees", response_model=list[CorporateEmployee])
-def employees():
-    return services.get_employees()
+@app.get("/v2/companies/{company}")
+def get_company(company: int):
+    return {"data": services.get_company()}
 
 
-@app.get("/api/teams", response_model=list[str])
-def teams():
-    return services.get_teams()
+@app.get("/v2/companies/{company}/members")
+def get_members(company: int):
+    return {"data": services.get_members()}
 
 
-@app.post(
-    "/api/employees/invite",
-    response_model=CorporateEmployee,
-    status_code=status.HTTP_201_CREATED,
-)
-def create_employee_invite(input_data: CreateEmployeeInviteInput):
-    return services.create_invite(input_data)
+@app.get("/v2/companies/{company}/teams")
+def get_teams(company: int):
+    return {"data": services.get_teams()}
 
 
-@app.post("/api/employees/{employee_id}/send-invite", response_model=CorporateEmployee)
-def send_employee_invite(employee_id: int):
-    return services.send_invite_email(employee_id)
+@app.post("/v2/companies/{company}/teams", status_code=status.HTTP_201_CREATED)
+def create_team(company: int, input_data: TeamInput):
+    return {"data": services.create_team(input_data.name)}
 
 
-@app.delete("/api/employees/{employee_id}", response_model=DeleteResult)
-def delete_employee(employee_id: int):
-    return services.remove_employee(employee_id)
+@app.patch("/v2/companies/{company}/teams/{team}")
+def rename_team(company: int, team: int, input_data: TeamInput):
+    return {"data": services.rename_team(team, input_data.name)}
 
 
-@app.get("/api/activation-summary", response_model=ActivationSummary)
-def activation_summary():
-    return services.get_activation_summary()
+@app.delete("/v2/companies/{company}/teams/{team}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_team(company: int, team: int):
+    services.delete_team(team)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.get("/api/health-metrics", response_model=HealthMetricCohort)
-def health_metrics(team: str = "All Teams"):
-    return services.get_health_metrics(team)
+@app.post("/v2/companies/{company}/teams/{team}/members", status_code=status.HTTP_201_CREATED)
+def create_member(company: int, team: int, input_data: CreateMemberInviteInput):
+    return {"data": services.create_member_invite(team, input_data)}
 
 
-@app.get("/api/billing-summary", response_model=BillingSummary)
-def billing_summary():
-    return services.get_billing_summary()
+@app.post("/v2/companies/{company}/members/{member}/invitation")
+def send_member_invitation(company: int, member: int):
+    return {"data": services.send_member_invitation(member)}
 
 
-@app.get("/api/vively/resolve-user", response_model=VivelyEmailResolverResult)
-def resolve_vively_user(email: str):
-    return services.resolve_by_email(email)
+@app.delete("/v2/companies/{company}/members/{member}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_member(company: int, member: int):
+    services.delete_member(member)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.get("/v2/companies/{company}/activation-summary")
+def activation_summary(company: int):
+    return {"data": services.get_activation_summary()}
+
+
+@app.get("/v2/companies/{company}/health-metrics")
+def company_health_metrics(company: int):
+    return {"data": services.get_health_metrics()}
+
+
+@app.get("/v2/companies/{company}/teams/{team}/health-metrics")
+def team_health_metrics(company: int, team: int):
+    return {"data": services.get_health_metrics(team)}
+
+
+@app.get("/v2/companies/{company}/billing")
+def billing(company: int):
+    return {"data": services.get_billing()}
+
+
+@app.get("/v2/invitations/{token}")
+def invitation(token: str):
+    return {
+        "data": {
+            "company_name": services.get_company()["company_name"],
+            "first_name": "",
+            "last_name": "",
+            "email": "",
+            "invite_status": "opened",
+        }
+    }
+
+
+@app.post("/v2/invitations/{token}/accept")
+def accept_invitation(token: str):
+    return {
+        "data": {
+            "company_name": services.get_company()["company_name"],
+            "first_name": "",
+            "last_name": "",
+            "email": "",
+            "invite_status": "continued_to_vively",
+        }
+    }
 
 
 @app.options("/{path:path}")

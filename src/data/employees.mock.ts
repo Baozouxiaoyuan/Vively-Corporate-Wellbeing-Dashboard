@@ -1,15 +1,27 @@
-import { CorporateAccount, CorporatePatient } from "../types/corporate";
+import { Company, CorporateMember, CorporateTeam } from "../types/corporate";
 
-export const corporateAccountMock: CorporateAccount = {
+export const companyMock: Company = {
   id: 1,
   company_name: "North Star Technologies",
   invite_code: "NORTHSTAR-2026",
   plan_price_cents: 29900,
-  admin_name: "Ruitao Yuan",
-  admin_email: "ryua7873@uni.sydney.edu.au",
+  primary_admin: {
+    first_name: "Ruitao",
+    last_name: "Yuan",
+    email: "ryua7873@uni.sydney.edu.au",
+  },
+  created_at: "2026-07-01T00:00:00+00:00",
 };
 
-const employeeNames = [
+const baseTeams: Omit<CorporateTeam, "member_count">[] = [
+  { id: 1, name: "Operations", created_at: "2026-07-01T00:00:00+00:00" },
+  { id: 2, name: "Engineering", created_at: "2026-07-01T00:00:00+00:00" },
+  { id: 3, name: "Sales", created_at: "2026-07-01T00:00:00+00:00" },
+  { id: 4, name: "People", created_at: "2026-07-01T00:00:00+00:00" },
+  { id: 5, name: "Customer Success", created_at: "2026-07-01T00:00:00+00:00" },
+];
+
+const memberNames = [
   "Ava Patel", "Leo Martin", "Sofia Nguyen", "Noah Brown", "Emily Wilson",
   "Jack Lee", "Olivia Garcia", "Ethan Moore", "Grace Taylor", "Daniel Kim",
   "Isabella White", "Will Harris", "Mia Clark", "Lucas Young", "Amelia Scott",
@@ -22,15 +34,29 @@ const employeeNames = [
   "Poppy Watson", "Owen Bennett", "Layla Russell", "Felix Brooks", "Hannah Foster",
 ];
 
-function teamNameFor(index: number) {
-  if (index < 12) return "Operations";
-  if (index < 23) return "Engineering";
-  if (index < 33) return "Sales";
-  if (index < 42) return "People";
-  return "Customer Success";
+function teamFor(index: number) {
+  if (index < 12) return baseTeams[0];
+  if (index < 23) return baseTeams[1];
+  if (index < 33) return baseTeams[2];
+  if (index < 42) return baseTeams[3];
+  return baseTeams[4];
 }
 
-function createSeedEmployee(fullName: string, index: number): CorporatePatient {
+function teamWithCount(team: Omit<CorporateTeam, "member_count">): CorporateTeam {
+  return {
+    ...team,
+    member_count: memberNames.filter((_, index) => teamFor(index).id === team.id).length,
+  };
+}
+
+export const teamsMock: CorporateTeam[] = baseTeams.map(teamWithCount);
+
+function splitName(fullName: string) {
+  const [firstName, ...lastName] = fullName.split(" ");
+  return { first_name: firstName, last_name: lastName.join(" ") };
+}
+
+function createSeedMember(fullName: string, index: number): CorporateMember {
   const id = index + 1;
   const slug = fullName.toLowerCase().replace(/ /g, ".");
   const inviteStatus = id % 7 === 0 ? "invited" : id % 5 === 0 ? "opened" : "continued_to_vively";
@@ -41,23 +67,21 @@ function createSeedEmployee(fullName: string, index: number): CorporatePatient {
 
   return {
     id,
-    corporate_account_id: corporateAccountMock.id,
     email: `${slug}@northstar.example`,
-    full_name: fullName,
-    team_name: teamNameFor(index),
+    ...splitName(fullName),
+    team: teamWithCount(teamFor(index)),
     has_medicare: id % 6 !== 0,
-    invite_token: `inv_${slug.replace(/\./g, "_")}`,
     invite_status: inviteStatus,
     signup_match_status: isLinked ? "found" : "not_found",
-    vively_user_id: isLinked ? 5000 + id : null,
-    vively_patient_id: isLinked ? 8000 + id : null,
     membership_status: baselineStatus === "completed" && id % 5 !== 0 ? "active" : "inactive",
     baseline_status: baselineStatus,
     invited_at: `2026-06-${invitedDay}T09:00:00Z`,
     email_sent_at: openedAt ? `2026-06-${invitedDay}T09:10:00Z` : null,
     opened_at: openedAt,
     signedup_at: isLinked ? `2026-06-${invitedDay}T14:20:00Z` : null,
+    removed_at: null,
+    created_at: `2026-06-${invitedDay}T09:00:00Z`,
   };
 }
 
-export const employeesMock: CorporatePatient[] = employeeNames.map(createSeedEmployee);
+export const membersMock: CorporateMember[] = memberNames.map(createSeedMember);

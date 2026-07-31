@@ -29,15 +29,14 @@ Frontend
 
 - Corporate account details
 - Corporate admin users and roles
-- Employee invite records
+- Member invite records
 - Team labels
-- Invite email delivery status
 - Activation summary calculations
 - Billing summary display data
 
 ## Vively Support Needed
 
-- Resolve employee email to Vively `users.id` and `patients.id`
+- Resolve employee identity internally where Vively linking is required
 - Confirm whether the employee has consented to aggregate corporate reporting
 - Provide membership status
 - Provide baseline completion status
@@ -52,7 +51,7 @@ The proposed schema in `backend/corporate-schema.sql` follows Vively's MySQL sty
 - `BIGINT UNSIGNED` primary keys
 - `created_at` and `updated_at` timestamps
 - enum fields for simple statuses
-- nullable Vively references:
+- nullable backend-only Vively references:
   - `vively_user_id`
   - `vively_patient_id`
 
@@ -84,16 +83,20 @@ Corporate admins should not see:
 
 Implemented in `backend/main.py`:
 
-- `GET /api/corporate-account`
-- `GET /api/employees`
-- `GET /api/teams`
-- `POST /api/employees/invite`
-- `POST /api/employees/:id/send-invite`
-- `DELETE /api/employees/:id`
-- `GET /api/activation-summary`
-- `GET /api/health-metrics?team=All%20Teams`
-- `GET /api/billing-summary`
-- `GET /api/vively/resolve-user?email=...`
+- `POST /v2/login`
+- `GET /v2/companies/{company}`
+- `GET /v2/companies/{company}/members`
+- `GET /v2/companies/{company}/teams`
+- `POST /v2/companies/{company}/teams`
+- `PATCH /v2/companies/{company}/teams/{team}`
+- `DELETE /v2/companies/{company}/teams/{team}`
+- `POST /v2/companies/{company}/teams/{team}/members`
+- `POST /v2/companies/{company}/members/{member}/invitation`
+- `DELETE /v2/companies/{company}/members/{member}`
+- `GET /v2/companies/{company}/activation-summary`
+- `GET /v2/companies/{company}/health-metrics`
+- `GET /v2/companies/{company}/teams/{team}/health-metrics`
+- `GET /v2/companies/{company}/billing`
 
 The current backend uses in-memory seed data. A real version would replace that with MySQL tables matching `backend/corporate-schema.sql`.
 
@@ -107,11 +110,13 @@ The backend prototype is split into small files:
 
 ## Frontend Integration Mode
 
-The frontend now has an API adapter:
+The frontend now has one target API shape:
 
 - `src/api/mockApi.ts` for default local mock data
 - `src/api/backendApi.ts` for HTTP calls to the corporate backend
 - `src/api/index.ts` to choose between them
+
+Both modes return Anton-style `/v2` data. The frontend no longer maps backend responses back into the older prototype employee model.
 
 Default mode:
 

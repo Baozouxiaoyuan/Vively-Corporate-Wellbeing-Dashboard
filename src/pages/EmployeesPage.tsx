@@ -1,32 +1,41 @@
-import { CheckCircle2, Copy, ExternalLink, MailOpen, MousePointerClick, Plus, Search, Send, UserCheck, Users, X } from "lucide-react";
-import { FormEvent, useEffect, useState } from "react";
+import { CheckCircle2, ExternalLink, MailOpen, MousePointerClick, Plus, Search, Send, UserCheck, Users, X } from "lucide-react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { createEmployeeInvite, getActivationSummary, getEmployees, removeEmployee, sendEmployeeInviteEmail } from "../api";
+import { createMemberInvite, createTeam, deleteMember, getActivationSummary, getMembers, getTeams, sendMemberInvitation } from "../api";
 import { DataTable } from "../components/ui/DataTable";
 import { MetricCard } from "../components/ui/MetricCard";
 import { PageHeader } from "../components/ui/PageHeader";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { Button } from "../components/vively-ui/Button";
 import { Input } from "../components/vively-ui/Input";
-import { productConfig } from "../config/product";
-import { ActivationSummary, CorporatePatient } from "../types/corporate";
+import { ActivationSummary, CorporateMember, CorporateTeam } from "../types/corporate";
+
+type InviteForm = {
+  email: string;
+  first_name: string;
+  last_name: string;
+  team_id: string;
+  has_medicare: boolean;
+};
 
 export function EmployeesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [employees, setEmployees] = useState<CorporatePatient[]>([]);
+  const [members, setMembers] = useState<CorporateMember[]>([]);
+  const [teams, setTeams] = useState<CorporateTeam[]>([]);
   const [summary, setSummary] = useState<ActivationSummary | null>(null);
-  const [form, setForm] = useState({ email: "", full_name: "", team_name: productConfig.teams[0], has_medicare: true });
+  const [form, setForm] = useState<InviteForm>({ email: "", first_name: "", last_name: "", team_id: "", has_medicare: true });
   const [customTeam, setCustomTeam] = useState("");
   const [search, setSearch] = useState("");
-  const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [sendingEmailIds, setSendingEmailIds] = useState<number[]>([]);
   const [inviteOpen, setInviteOpen] = useState(false);
 
   useEffect(() => {
-    void Promise.all([getEmployees(), getActivationSummary()]).then(([employeesData, summaryData]) => {
-      setEmployees(employeesData);
+    void Promise.all([getMembers(), getTeams(), getActivationSummary()]).then(([membersData, teamsData, summaryData]) => {
+      setMembers(membersData);
+      setTeams(teamsData);
       setSummary(summaryData);
+      setForm((current) => ({ ...current, team_id: String(teamsData[0]?.id ?? "") }));
     });
   }, []);
 
@@ -36,6 +45,17 @@ export function EmployeesPage() {
     }
   }, [searchParams]);
 
+  const funnelData = useMemo(() => {
+    if (!summary) return [];
+    return [
+      { stage: "Invited", count: summary.funnel.invited },
+      { stage: "Opened", count: summary.funnel.opened },
+      { stage: "Continued", count: summary.funnel.continued_to_vively },
+      { stage: "Active", count: summary.funnel.active },
+      { stage: "Baseline", count: summary.funnel.baseline_completed },
+    ];
+  }, [summary]);
+
   function closeInviteDialog() {
     setInviteOpen(false);
     if (searchParams.has("invite")) {
@@ -43,46 +63,58 @@ export function EmployeesPage() {
     }
   }
 
+  async function refreshOperationalData() {
+    const [membersData, teamsData, summaryData] = await Promise.all([getMembers(), getTeams(), getActivationSummary()]);
+    setMembers(membersData);
+    setTeams(teamsData);
+    setSummary(summaryData);
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const teamName = form.team_name === "Custom" ? customTeam.trim() : form.team_name;
-    if (!teamName) return;
 
-    const created = await createEmployeeInvite({ ...form, team_name: teamName });
-    setEmployees((current) => [created, ...current]);
-    setSummary(await getActivationSummary());
-    setForm({ email: "", full_name: "", team_name: productConfig.teams[0], has_medicare: true });
+    let teamId = Number(form.team_id);
+    if (form.team_id === "custom") {
+      const teamName = customTeam.trim();
+      if (!teamName) return;
+      const createdTeam = await createTeam(teamName);
+      teamId = createdTeam.id;
+    }
+
+    const created = await createMemberInvite(teamId, {
+      email: form.email,
+      first_name: form.first_name,
+      last_name: form.last_name,
+      has_medicare: form.has_medicare,
+    });
+
+    setMembers((current) => [created, ...current]);
+    await refreshOperationalData();
+    setForm({ email: "", first_name: "", last_name: "", team_id: String(teamId), has_medicare: true });
     setCustomTeam("");
     closeInviteDialog();
   }
 
-  async function copyInvite(token: string) {
-    const link = `${window.location.origin}/join/${token}`;
-    await navigator.clipboard.writeText(link);
-    setCopiedToken(token);
-    window.setTimeout(() => setCopiedToken(null), 1600);
+  async function sendInviteEmail(memberId: number) {
+    setSendingEmailIds((current) => [...current, memberId]);
+    const updatedMember = await sendMemberInvitation(memberId);
+    setMembers((current) => current.map((member) => (member.id === memberId ? updatedMember : member)));
+    setSendingEmailIds((current) => current.filter((id) => id !== memberId));
   }
 
-  async function sendInviteEmail(employeeId: number) {
-    setSendingEmailIds((current) => [...current, employeeId]);
-    const updatedEmployee = await sendEmployeeInviteEmail(employeeId);
-    setEmployees((current) => current.map((employee) => (employee.id === employeeId ? updatedEmployee : employee)));
-    setSendingEmailIds((current) => current.filter((id) => id !== employeeId));
-  }
-
-  async function handleRemoveEmployee(employee: CorporatePatient) {
-    const confirmed = window.confirm(`Remove ${employee.full_name} from this corporate list?`);
+  async function handleRemoveMember(member: CorporateMember) {
+    const name = memberName(member);
+    const confirmed = window.confirm(`Remove ${name} from this corporate list?`);
     if (!confirmed) return;
 
-    await removeEmployee(employee.id);
-    setEmployees((current) => current.filter((item) => item.id !== employee.id));
-    setSummary(await getActivationSummary());
+    await deleteMember(member.id);
+    await refreshOperationalData();
   }
 
-  const filteredEmployees = employees.filter((employee) => {
+  const filteredMembers = members.filter((member) => {
     const query = search.trim().toLowerCase();
     if (!query) return true;
-    return [employee.full_name, employee.email, employee.team_name].some((value) => value.toLowerCase().includes(query));
+    return [memberName(member), member.email, member.team.name].some((value) => value.toLowerCase().includes(query));
   });
 
   return (
@@ -100,20 +132,18 @@ export function EmployeesPage() {
       {summary ? (
         <>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="Total invited" value={summary.total_invited} icon={Users} />
-            <MetricCard label="Opened invites" value={summary.opened_invites} icon={MailOpen} />
-            <MetricCard label="Continued to Vively" value={summary.continued_to_vively} icon={ExternalLink} />
-            <MetricCard label="Linked employees" value={summary.linked_employees} icon={UserCheck} />
-            <MetricCard label="Baseline completed" value={summary.baseline_completed} icon={CheckCircle2} />
-            <MetricCard label="Active memberships" value={summary.active_memberships} icon={MousePointerClick} />
-            <MetricCard label="Activation rate" value={`${summary.activation_rate}%`} helper="Continued / invited" />
-            <MetricCard label="Baseline completion" value={`${summary.baseline_completion_rate}%`} helper={`${summary.membership_rate}% membership rate`} />
+            <MetricCard label="Total invited" value={summary.total_members} icon={Users} />
+            <MetricCard label="Opened invites" value={summary.funnel.opened} icon={MailOpen} />
+            <MetricCard label="Continued to Vively" value={summary.funnel.continued_to_vively} icon={ExternalLink} />
+            <MetricCard label="Active memberships" value={summary.funnel.active} icon={UserCheck} />
+            <MetricCard label="Baseline completed" value={summary.funnel.baseline_completed} icon={CheckCircle2} />
+            <MetricCard label="Activation rate" value={`${Math.round(summary.activation_rate * 100)}%`} helper="Continued / invited" icon={MousePointerClick} />
           </div>
           <section className="my-6 rounded-2xl border border-ink/10 bg-white p-6 shadow-soft">
             <h2 className="mb-4 text-base font-semibold">Activation funnel</h2>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={summary.funnel}>
+                <BarChart data={funnelData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="stage" tickLine={false} axisLine={false} />
                   <YAxis allowDecimals={false} tickLine={false} axisLine={false} />
@@ -142,16 +172,15 @@ export function EmployeesPage() {
             <div className="p-6">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Full name" value={form.full_name} onChange={(value) => setForm({ ...form, full_name: value })} required />
-                  <Field label="Email" type="email" value={form.email} onChange={(value) => setForm({ ...form, email: value })} required />
+                  <Field label="First name" value={form.first_name} onChange={(value) => setForm({ ...form, first_name: value })} required />
+                  <Field label="Last name" value={form.last_name} onChange={(value) => setForm({ ...form, last_name: value })} required />
+                  <Field label="Work email" type="email" value={form.email} onChange={(value) => setForm({ ...form, email: value })} required />
+                  <TeamField teams={teams} value={form.team_id} customTeam={customTeam} onChange={(value) => setForm({ ...form, team_id: value })} onCustomTeamChange={setCustomTeam} />
                 </div>
-                <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
-                  <TeamField value={form.team_name} customTeam={customTeam} onChange={(value) => setForm({ ...form, team_name: value })} onCustomTeamChange={setCustomTeam} />
-                  <label className="flex h-10 items-center gap-2 rounded-full border border-neutral-300 bg-neutral-50 px-4 text-sm text-ink/70">
-                    <input type="checkbox" checked={form.has_medicare} onChange={(event) => setForm({ ...form, has_medicare: event.target.checked })} />
-                    Medicare
-                  </label>
-                </div>
+                <label className="inline-flex h-10 items-center gap-2 rounded-full border border-neutral-300 bg-neutral-50 px-4 text-sm text-ink/70">
+                  <input type="checkbox" checked={form.has_medicare} onChange={(event) => setForm({ ...form, has_medicare: event.target.checked })} />
+                  Medicare eligible
+                </label>
                 <div className="flex flex-col gap-3 border-t border-ink/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm text-ink/55">{form.email ? "1 ready to invite" : "0 ready to invite"}</p>
                   <div className="flex justify-end gap-3">
@@ -179,41 +208,32 @@ export function EmployeesPage() {
             className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-ink/45"
           />
         </label>
-        <p className="text-sm text-ink/55">{filteredEmployees.length} employees shown</p>
+        <p className="text-sm text-ink/55">{filteredMembers.length} employees shown</p>
       </div>
       <DataTable
-        data={filteredEmployees}
-        getKey={(employee) => employee.id}
+        data={filteredMembers}
+        getKey={(member) => member.id}
         columns={[
-          { header: "Name", cell: (employee) => <span className="font-medium text-ink">{employee.full_name}</span> },
-          { header: "Email", cell: (employee) => employee.email },
-          { header: "Team", cell: (employee) => employee.team_name },
-          { header: "Invite", cell: (employee) => <StatusBadge value={employee.invite_status} /> },
-          { header: "Signup match", cell: (employee) => <StatusBadge value={employee.signup_match_status} /> },
-          { header: "Baseline", cell: (employee) => <StatusBadge value={employee.baseline_status} /> },
-          { header: "Membership", cell: (employee) => <StatusBadge value={employee.membership_status} /> },
-          {
-            header: "Invite link",
-            cell: (employee) => (
-              <Button type="button" variant="secondary" size="s" onClick={() => void copyInvite(employee.invite_token)}>
-                <Copy className="h-3.5 w-3.5" />
-                {copiedToken === employee.invite_token ? "Copied" : "Copy"}
-              </Button>
-            ),
-          },
+          { header: "Name", cell: (member) => <span className="font-medium text-ink">{memberName(member)}</span> },
+          { header: "Email", cell: (member) => member.email },
+          { header: "Team", cell: (member) => member.team.name },
+          { header: "Invite", cell: (member) => <StatusBadge value={member.invite_status} /> },
+          { header: "Signup match", cell: (member) => <StatusBadge value={member.signup_match_status} /> },
+          { header: "Baseline", cell: (member) => <StatusBadge value={member.baseline_status} /> },
+          { header: "Membership", cell: (member) => <StatusBadge value={member.membership_status} /> },
           {
             header: "Action",
-            cell: (employee) => {
-              const isSending = sendingEmailIds.includes(employee.id);
-              const emailLabel = employee.email_sent_at ? "Resend" : "Send email";
+            cell: (member) => {
+              const isSending = sendingEmailIds.includes(member.id);
+              const emailLabel = member.email_sent_at ? "Resend" : "Send email";
 
               return (
                 <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="subtle" size="s" loading={isSending} onClick={() => void sendInviteEmail(employee.id)}>
+                  <Button type="button" variant="subtle" size="s" loading={isSending} onClick={() => void sendInviteEmail(member.id)}>
                     <Send className="h-3.5 w-3.5" />
                     {emailLabel}
                   </Button>
-                  <Button type="button" variant="secondary" size="s" onClick={() => void handleRemoveEmployee(employee)}>
+                  <Button type="button" variant="secondary" size="s" onClick={() => void handleRemoveMember(member)}>
                     Remove
                   </Button>
                 </div>
@@ -226,12 +246,18 @@ export function EmployeesPage() {
   );
 }
 
+function memberName(member: CorporateMember) {
+  return [member.first_name, member.last_name].filter(Boolean).join(" ");
+}
+
 function TeamField({
+  teams,
   value,
   customTeam,
   onChange,
   onCustomTeamChange,
 }: {
+  teams: CorporateTeam[];
   value: string;
   customTeam: string;
   onChange: (value: string) => void;
@@ -246,14 +272,14 @@ function TeamField({
         onChange={(event) => onChange(event.target.value)}
         className="mt-2 h-10 w-full rounded-md border border-neutral-300 bg-white px-3 text-sm text-ink outline-none focus:border-teal focus:ring-2 focus:ring-teal/10"
       >
-        {productConfig.teams.map((team) => (
-          <option key={team} value={team}>
-            {team}
+        {teams.map((team) => (
+          <option key={team.id} value={team.id}>
+            {team.name}
           </option>
         ))}
-        <option value="Custom">Custom team...</option>
+        <option value="custom">Custom team...</option>
       </select>
-      {value === "Custom" ? (
+      {value === "custom" ? (
         <Input
           required
           value={customTeam}

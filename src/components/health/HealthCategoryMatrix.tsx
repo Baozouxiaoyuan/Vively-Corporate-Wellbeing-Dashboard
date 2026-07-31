@@ -1,9 +1,7 @@
-import { HealthMetricCohort } from "../../types/corporate";
-
-type CategoryMetric = HealthMetricCohort["category_distribution"][number];
+import { HealthCategory } from "../../types/corporate";
 
 interface HealthCategoryMatrixProps {
-  categories: CategoryMetric[];
+  categories: HealthCategory[];
 }
 
 export function HealthCategoryMatrix({ categories }: HealthCategoryMatrixProps) {
@@ -18,7 +16,7 @@ export function HealthCategoryMatrix({ categories }: HealthCategoryMatrixProps) 
 
       <div className="mt-6 grid gap-x-10 gap-y-6 lg:grid-cols-2">
         {categories.map((category) => (
-          <CategoryRow key={category.category} category={category} />
+          <CategoryRow key={category.name} category={category} />
         ))}
       </div>
 
@@ -31,14 +29,14 @@ export function HealthCategoryMatrix({ categories }: HealthCategoryMatrixProps) 
   );
 }
 
-function CategoryRow({ category }: { category: CategoryMetric }) {
+function CategoryRow({ category }: { category: HealthCategory }) {
   const inRange = Math.max(0, category.in_range);
   const needsAttention = Math.max(0, category.needs_attention);
 
   return (
     <div>
       <div className="mb-2 flex items-baseline justify-between gap-4">
-        <h3 className="text-sm font-semibold tracking-normal text-ink">{category.category}</h3>
+        <h3 className="text-sm font-semibold tracking-normal text-ink">{category.name}</h3>
         <p className="shrink-0 text-sm text-ink/55">{category.optimal}% optimal</p>
       </div>
       <div className="flex h-4 w-full overflow-hidden rounded-full bg-ink/10">

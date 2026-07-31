@@ -1,30 +1,34 @@
 import { CreditCard, ShieldCheck, Users } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getBillingSummary } from "../api";
+import { getBilling, getCompany } from "../api";
 import { DataTable } from "../components/ui/DataTable";
 import { MetricCard } from "../components/ui/MetricCard";
 import { PageHeader } from "../components/ui/PageHeader";
 import { StatusBadge } from "../components/ui/StatusBadge";
-import { BillingSummary } from "../types/corporate";
+import { BillingSummary, Company } from "../types/corporate";
 import { formatCurrency, formatDate } from "../utils/format";
 
 export function BillingPage() {
+  const [company, setCompany] = useState<Company | null>(null);
   const [summary, setSummary] = useState<BillingSummary | null>(null);
 
   useEffect(() => {
-    void getBillingSummary().then(setSummary);
+    void Promise.all([getCompany(), getBilling()]).then(([companyData, billingData]) => {
+      setCompany(companyData);
+      setSummary(billingData);
+    });
   }, []);
 
-  if (!summary) return null;
+  if (!summary || !company) return null;
 
   return (
     <>
       <PageHeader title="Billing" description="Card-on-file billing for the corporate MVP. Payment processing is represented as prototype data only." />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Annual price" value={formatCurrency(summary.account.plan_price_cents)} helper="Per activated employee" icon={CreditCard} />
-        <MetricCard label="Billable employees" value={summary.employee_count} helper="Activated this billing period" icon={Users} />
-        <MetricCard label="Current period" value={summary.current_period} helper={summary.account.company_name} />
-        <MetricCard label="Amount due" value={formatCurrency(summary.current_amount_cents)} helper={summary.current_status} />
+        <MetricCard label="Annual price" value={formatCurrency(company.plan_price_cents)} helper="Per activated employee" icon={CreditCard} />
+        <MetricCard label="Billable employees" value={summary.annual_membership.employee_count} helper="Activated this billing period" icon={Users} />
+        <MetricCard label="Current period" value={summary.current_period} helper={company.company_name} />
+        <MetricCard label="Annual charge" value={formatCurrency(summary.annual_membership.amount_cents)} helper={summary.annual_membership.status} />
       </div>
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <section className="rounded-2xl border border-ink/10 bg-white p-6 shadow-soft">
@@ -32,13 +36,13 @@ export function BillingPage() {
             <div>
               <h2 className="text-base font-semibold">Current company plan</h2>
               <p className="mt-1 text-sm text-ink/60">
-                {summary.account.company_name} is billed {formatCurrency(summary.account.plan_price_cents)} per employee per year when an employee activates.
+                {company.company_name} is billed {formatCurrency(company.plan_price_cents)} per employee per year when an employee activates.
               </p>
               <p className="mt-2 text-sm text-ink/60">
                 Two Baseline Health Checks are included for Medicare-eligible employees. Non-Medicare employees may incur a test surcharge.
               </p>
             </div>
-            <StatusBadge value={summary.current_status} />
+            <StatusBadge value={summary.annual_membership.status} />
           </div>
         </section>
         <section className="rounded-2xl border border-ink/10 bg-white p-6 shadow-soft">
@@ -54,7 +58,7 @@ export function BillingPage() {
       </div>
       <div className="mt-6">
         <DataTable
-          data={summary.history}
+          data={summary.charges}
           getKey={(charge) => charge.id}
           columns={[
             { header: "Period", cell: (charge) => charge.period },

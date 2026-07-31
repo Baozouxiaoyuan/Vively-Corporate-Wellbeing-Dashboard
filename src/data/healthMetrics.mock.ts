@@ -1,96 +1,77 @@
-import { HealthMetricCohort } from "../types/corporate";
+import { HealthMetrics, HealthTrend } from "../types/corporate";
+import { teamsMock } from "./employees.mock";
 
-export const healthMetricsMock: HealthMetricCohort[] = [
+const categorySets = {
+  company: [
+    ["Aging", 57, 30, 13], ["Metabolic", 56, 31, 13], ["Heart", 61, 28, 11], ["Liver", 68, 24, 8], ["Nutrients", 44, 38, 18],
+    ["Kidney", 72, 22, 6], ["Hormones", 49, 34, 17], ["Immunity", 63, 29, 8], ["Inflammation", 52, 30, 18], ["Blood", 66, 27, 7],
+  ],
+  operations: [
+    ["Aging", 51, 31, 18], ["Metabolic", 53, 33, 14], ["Heart", 47, 35, 18], ["Liver", 57, 31, 12], ["Nutrients", 42, 37, 21],
+    ["Kidney", 69, 23, 8], ["Hormones", 46, 35, 19], ["Immunity", 58, 30, 12], ["Inflammation", 49, 32, 19], ["Blood", 61, 28, 11],
+  ],
+  engineering: [
+    ["Aging", 60, 27, 13], ["Metabolic", 61, 28, 11], ["Heart", 55, 31, 14], ["Liver", 64, 27, 9], ["Nutrients", 50, 34, 16],
+    ["Kidney", 74, 20, 6], ["Hormones", 54, 33, 13], ["Immunity", 67, 25, 8], ["Inflammation", 57, 29, 14], ["Blood", 69, 24, 7],
+  ],
+  sales: [
+    ["Aging", 52, 32, 16], ["Metabolic", 49, 34, 17], ["Heart", 55, 31, 14], ["Liver", 60, 29, 11], ["Nutrients", 39, 39, 22],
+    ["Kidney", 66, 24, 10], ["Hormones", 44, 36, 20], ["Immunity", 58, 29, 13], ["Inflammation", 46, 34, 20], ["Blood", 62, 28, 10],
+  ],
+} as const;
+
+function categories(rows: readonly (readonly [string, number, number, number])[]) {
+  return rows.map(([name, optimal, in_range, needs_attention]) => ({
+    name,
+    average_score: optimal,
+    trend: (optimal >= 55 ? "up" : optimal >= 45 ? "flat" : "down") as HealthTrend,
+    optimal,
+    in_range,
+    needs_attention,
+  }));
+}
+
+export const healthMetricsMock: HealthMetrics[] = [
   {
-    team: "All Teams",
+    scope: "company",
+    team: null,
     cohort_size: 50,
-    optimal_biomarker_percentage: 54,
-    in_range_biomarker_percentage: 31,
-    needs_attention_percentage: 15,
-    category_distribution: [
-      { category: "Aging", optimal: 57, in_range: 30, needs_attention: 13 },
-      { category: "Metabolic", optimal: 56, in_range: 31, needs_attention: 13 },
-      { category: "Heart", optimal: 61, in_range: 28, needs_attention: 11 },
-      { category: "Liver", optimal: 68, in_range: 24, needs_attention: 8 },
-      { category: "Nutrients", optimal: 44, in_range: 38, needs_attention: 18 },
-      { category: "Kidney", optimal: 72, in_range: 22, needs_attention: 6 },
-      { category: "Hormones", optimal: 49, in_range: 34, needs_attention: 17 },
-      { category: "Immunity", optimal: 63, in_range: 29, needs_attention: 8 },
-      { category: "Inflammation", optimal: 52, in_range: 30, needs_attention: 18 },
-      { category: "Blood", optimal: 66, in_range: 27, needs_attention: 7 },
-    ],
+    below_privacy_threshold: false,
+    categories: categories(categorySets.company),
   },
   {
-    team: "Operations",
+    scope: "team",
+    team: teamsMock[0],
     cohort_size: 12,
-    optimal_biomarker_percentage: 49,
-    in_range_biomarker_percentage: 34,
-    needs_attention_percentage: 17,
-    category_distribution: [
-      { category: "Aging", optimal: 51, in_range: 31, needs_attention: 18 },
-      { category: "Metabolic", optimal: 53, in_range: 33, needs_attention: 14 },
-      { category: "Heart", optimal: 47, in_range: 35, needs_attention: 18 },
-      { category: "Liver", optimal: 57, in_range: 31, needs_attention: 12 },
-      { category: "Nutrients", optimal: 42, in_range: 37, needs_attention: 21 },
-      { category: "Kidney", optimal: 69, in_range: 23, needs_attention: 8 },
-      { category: "Hormones", optimal: 46, in_range: 35, needs_attention: 19 },
-      { category: "Immunity", optimal: 58, in_range: 30, needs_attention: 12 },
-      { category: "Inflammation", optimal: 49, in_range: 32, needs_attention: 19 },
-      { category: "Blood", optimal: 61, in_range: 28, needs_attention: 11 },
-    ],
+    below_privacy_threshold: false,
+    categories: categories(categorySets.operations),
   },
   {
-    team: "Engineering",
+    scope: "team",
+    team: teamsMock[1],
     cohort_size: 11,
-    optimal_biomarker_percentage: 58,
-    in_range_biomarker_percentage: 30,
-    needs_attention_percentage: 12,
-    category_distribution: [
-      { category: "Aging", optimal: 60, in_range: 27, needs_attention: 13 },
-      { category: "Metabolic", optimal: 61, in_range: 28, needs_attention: 11 },
-      { category: "Heart", optimal: 55, in_range: 31, needs_attention: 14 },
-      { category: "Liver", optimal: 64, in_range: 27, needs_attention: 9 },
-      { category: "Nutrients", optimal: 50, in_range: 34, needs_attention: 16 },
-      { category: "Kidney", optimal: 74, in_range: 20, needs_attention: 6 },
-      { category: "Hormones", optimal: 54, in_range: 33, needs_attention: 13 },
-      { category: "Immunity", optimal: 67, in_range: 25, needs_attention: 8 },
-      { category: "Inflammation", optimal: 57, in_range: 29, needs_attention: 14 },
-      { category: "Blood", optimal: 69, in_range: 24, needs_attention: 7 },
-    ],
+    below_privacy_threshold: false,
+    categories: categories(categorySets.engineering),
   },
   {
-    team: "Sales",
+    scope: "team",
+    team: teamsMock[2],
     cohort_size: 10,
-    optimal_biomarker_percentage: 48,
-    in_range_biomarker_percentage: 35,
-    needs_attention_percentage: 17,
-    category_distribution: [
-      { category: "Aging", optimal: 52, in_range: 32, needs_attention: 16 },
-      { category: "Metabolic", optimal: 49, in_range: 34, needs_attention: 17 },
-      { category: "Heart", optimal: 55, in_range: 31, needs_attention: 14 },
-      { category: "Liver", optimal: 60, in_range: 29, needs_attention: 11 },
-      { category: "Nutrients", optimal: 39, in_range: 39, needs_attention: 22 },
-      { category: "Kidney", optimal: 66, in_range: 24, needs_attention: 10 },
-      { category: "Hormones", optimal: 44, in_range: 36, needs_attention: 20 },
-      { category: "Immunity", optimal: 58, in_range: 29, needs_attention: 13 },
-      { category: "Inflammation", optimal: 46, in_range: 34, needs_attention: 20 },
-      { category: "Blood", optimal: 62, in_range: 28, needs_attention: 10 },
-    ],
+    below_privacy_threshold: false,
+    categories: categories(categorySets.sales),
   },
   {
-    team: "People",
+    scope: "team",
+    team: teamsMock[3],
     cohort_size: 9,
-    optimal_biomarker_percentage: 53,
-    in_range_biomarker_percentage: 32,
-    needs_attention_percentage: 15,
-    category_distribution: [],
+    below_privacy_threshold: true,
+    categories: null,
   },
   {
-    team: "Customer Success",
+    scope: "team",
+    team: teamsMock[4],
     cohort_size: 8,
-    optimal_biomarker_percentage: 51,
-    in_range_biomarker_percentage: 33,
-    needs_attention_percentage: 16,
-    category_distribution: [],
+    below_privacy_threshold: true,
+    categories: null,
   },
 ];
