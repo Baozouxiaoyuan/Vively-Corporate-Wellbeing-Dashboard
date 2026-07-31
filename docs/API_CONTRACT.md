@@ -1,4 +1,4 @@
-# Frontend API Contract
+# API Contract
 
 This prototype now follows Anton's target API shape directly. The frontend model is aligned with the target backend contract rather than an older local route shape.
 

@@ -59,7 +59,7 @@ docs/             API and integration notes
 
 ## API Contract
 
-The current frontend API contract is documented in `docs/MOCK_API_SPEC.md`.
+The current frontend/backend API contract is documented in `docs/API_CONTRACT.md`.
 
 ## Backend Prototype
 
@@ -83,6 +83,34 @@ Default `npm run dev` still uses the in-browser mock API so the prototype can ru
 
 Backend design notes:
 
-- `backend/README.md`
 - `backend/corporate-schema.sql`
-- `docs/CORPORATE_BACKEND_PLAN.md`
+
+Backend file structure:
+
+```text
+backend/main.py              FastAPI routes
+backend/services.py          prototype business logic
+backend/seed_data.py         in-memory seed data
+backend/schemas.py           request schemas
+backend/corporate-schema.sql future MySQL-style corporate layer schema
+```
+
+## Backend Scope
+
+The FastAPI backend is a lightweight prototype, not production infrastructure. It demonstrates the target `/v2` route shape, seeded data, invitation workflow, team labels, activation summary, aggregate health metrics and billing summary.
+
+For real integration, Vively would still need to provide or connect:
+
+- consent-aware employee identity linking
+- real invitation email sending
+- membership and Baseline completion status
+- aggregate health metrics calculated from Vively-owned data
+- official Vively score and benchmark comparison logic
+- production billing and tokenised card provider handling
+
+## Handover Files
+
+- `README.md` - setup, pages, interactions and backend notes
+- `docs/API_CONTRACT.md` - routes and response shapes
+- `docs/vively-corporate-dashboard.postman_collection.json` - Postman collection
+- `backend/corporate-schema.sql` - future database table proposal
