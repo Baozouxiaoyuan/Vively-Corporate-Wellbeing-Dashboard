@@ -61,11 +61,13 @@ export function HealthMetricsPage() {
           </div>
         }
       />
-      <section className="mt-5 rounded-2xl bg-dark-green-900 px-6 py-6 text-white shadow-soft sm:px-7">
-        <p className="font-serif text-2xl leading-snug sm:text-3xl">
-          Your team's vitality is <span className="font-semibold">strong and climbing</span>, tracking younger than the Australian average.
-        </p>
-      </section>
+      {metrics && !metrics.below_privacy_threshold ? (
+        <section className="mt-5 rounded-2xl bg-dark-green-900 px-6 py-6 text-white shadow-soft sm:px-7">
+          <p className="font-serif text-2xl leading-snug sm:text-3xl">
+            Your team's vitality is <span className="font-semibold">strong and climbing</span>, tracking younger than the Australian average.
+          </p>
+        </section>
+      ) : null}
       {!metrics ? null : metrics.below_privacy_threshold ? (
         <div className="mt-6 space-y-6">
           <InsufficientData threshold={productConfig.privacyThreshold} cohortSize={metrics.cohort_size} />
