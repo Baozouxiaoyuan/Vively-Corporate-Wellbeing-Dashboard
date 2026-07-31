@@ -88,7 +88,7 @@ export function EmployeesPage() {
       has_medicare: form.has_medicare,
     });
 
-    setMembers((current) => [created, ...current]);
+    await sendMemberInvitation(created.id);
     await refreshOperationalData();
     setForm({ email: "", first_name: "", last_name: "", team_id: String(teamId), has_medicare: true });
     setCustomTeam("");
@@ -225,13 +225,12 @@ export function EmployeesPage() {
             header: "Action",
             cell: (member) => {
               const isSending = sendingEmailIds.includes(member.id);
-              const emailLabel = member.email_sent_at ? "Resend" : "Send email";
 
               return (
                 <div className="flex flex-wrap gap-2">
                   <Button type="button" variant="subtle" size="s" loading={isSending} onClick={() => void sendInviteEmail(member.id)}>
                     <Send className="h-3.5 w-3.5" />
-                    {emailLabel}
+                    Resend
                   </Button>
                   <Button type="button" variant="secondary" size="s" onClick={() => void handleRemoveMember(member)}>
                     Remove

@@ -35,6 +35,7 @@ The old `/activation` route redirects to `/employees` because activation is now 
 - Remove a member from the corporate mock list
 - Search members by name, email or team
 - Filter health metrics by team
+- Add a team label in Settings
 - Rename a team label in Settings
 - Delete an empty team in Settings
 - Hide health metrics when the cohort is below the privacy threshold

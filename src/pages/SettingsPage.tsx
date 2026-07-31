@@ -1,6 +1,6 @@
-import { Building2, Check, Pencil, ShieldCheck, Trash2, UserPlus, X } from "lucide-react";
+import { Building2, Check, Pencil, Plus, ShieldCheck, Trash2, UserPlus, X } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
-import { deleteTeam, getCompany, getTeams, renameTeam } from "../api";
+import { createTeam, deleteTeam, getCompany, getTeams, renameTeam } from "../api";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Button } from "../components/vively-ui/Button";
 import { Input } from "../components/vively-ui/Input";
@@ -17,6 +17,7 @@ export function SettingsPage() {
   const [teams, setTeams] = useState<CorporateTeam[]>([]);
   const [editingTeamId, setEditingTeamId] = useState<number | null>(null);
   const [editingTeamName, setEditingTeamName] = useState("");
+  const [newTeamName, setNewTeamName] = useState("");
   const [teamMessage, setTeamMessage] = useState("");
 
   useEffect(() => {
@@ -70,6 +71,13 @@ export function SettingsPage() {
           <Building2 className="h-5 w-5 text-teal" />
           <h2 className="text-base font-semibold text-ink">Teams</h2>
         </div>
+        <form className="mb-4 flex flex-col gap-2 sm:flex-row" onSubmit={(event) => void handleCreateTeam(event)}>
+          <Input value={newTeamName} onChange={(event) => setNewTeamName(event.target.value)} placeholder="New team name" aria-label="New team name" />
+          <Button type="submit" variant="secondary" className="sm:w-auto">
+            <Plus className="h-4 w-4" />
+            Add team
+          </Button>
+        </form>
         <div className="space-y-3">
           {teams.map((team) => (
             <div key={team.id} className="flex flex-col gap-3 rounded-md border border-ink/10 bg-mist p-3 sm:flex-row sm:items-center sm:justify-between">
@@ -149,6 +157,17 @@ export function SettingsPage() {
     setTeams((current) => current.map((team) => (team.id === teamId ? updatedTeam : team)));
     setTeamMessage("");
     cancelTeamEdit();
+  }
+
+  async function handleCreateTeam(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const name = newTeamName.trim();
+    if (!name) return;
+
+    const createdTeam = await createTeam(name);
+    setTeams((current) => [...current, createdTeam]);
+    setNewTeamName("");
+    setTeamMessage("");
   }
 
   async function handleDeleteTeam(team: CorporateTeam) {
